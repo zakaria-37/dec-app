@@ -4,23 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Abdou Deco — Devis plaque de plâtre</title>
-<meta name="theme-color" content="#1f2a37">
+<meta name="theme-color" content="#111111">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-180.png">
 <style>
 :root{
-  --bg:#f5f3ef; --card:#fff; --ink:#1f2a37; --muted:#6b7280; --line:#e5e1da;
-  --accent:#b8893b; --accent-d:#94692a; --ok:#15803d; --warn:#b45309; --danger:#b91c1c;
+  --bg:#f4f4f3; --card:#fff; --ink:#111111; --muted:#6b6b6b; --line:#e3e3e3;
+  --accent:#111111; --accent-d:#000000; --ok:#15803d; --warn:#b45309; --danger:#b91c1c;
   --r:12px;
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.45}
 header.top{background:var(--ink);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
-header.top .logo{width:38px;height:38px;flex:none}
+header.top .logo{width:44px;height:44px;flex:none}
 header.top h1{font-size:18px;margin:0;letter-spacing:.5px}
 header.top small{display:block;color:#cbd5e1;font-size:12px;font-weight:400}
-header.top .net{margin-left:auto;font-size:12px;padding:3px 8px;border-radius:99px;background:#374151}
+header.top .net{margin-left:auto;font-size:12px;padding:3px 8px;border-radius:99px;background:#2b2b2b}
 header.top .net.off{background:var(--warn)}
 nav.tabs{display:flex;gap:4px;padding:8px 12px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:62px;z-index:9;overflow-x:auto}
 nav.tabs button{border:0;background:none;padding:8px 14px;border-radius:8px;font-size:14px;color:var(--muted);cursor:pointer;white-space:nowrap}
@@ -43,7 +43,7 @@ textarea{min-height:70px;resize:vertical}
 .btn.sm{padding:5px 10px;font-size:13px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .sp{flex:1}
-.room{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;background:#fcfbf9}
+.room{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;background:#fbfbfb}
 .room .head{display:flex;gap:8px;align-items:center;margin-bottom:10px}
 .room .head input{font-weight:600}
 .res{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:10px}
@@ -61,9 +61,9 @@ td.n,th.n{text-align:right;white-space:nowrap}
 tfoot td{font-weight:700}
 .total{font-size:20px;color:var(--accent-d)}
 .plist .item{display:flex;gap:12px;align-items:center;padding:12px;border-bottom:1px solid var(--line);cursor:pointer}
-.plist .item:hover{background:#faf8f4}
+.plist .item:hover{background:#f7f7f7}
 .plist .item:last-child{border-bottom:0}
-.tag{font-size:11px;padding:2px 8px;border-radius:99px;background:#eef2f7;color:var(--muted)}
+.tag{font-size:11px;padding:2px 8px;border-radius:99px;background:#efefef;color:var(--muted)}
 .tag.ok{background:#dcfce7;color:var(--ok)}
 .tag.w{background:#fef3c7;color:var(--warn)}
 .empty{text-align:center;color:var(--muted);padding:30px}
@@ -71,7 +71,7 @@ tfoot td{font-weight:700}
 .hint{font-size:12px;color:var(--muted);margin-top:6px}
 .hide{display:none!important}
 .cmp{background:#fff;border:1px solid var(--line);border-radius:8px;font-size:13px}
-.cmp tr.on td{background:#fdf6e9;font-weight:700}
+.cmp tr.on td{background:#efefef;font-weight:700}
 .walls{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px}
 .walls td,.walls th{padding:5px 6px}
 .walls select{width:auto}
@@ -109,8 +109,8 @@ input,select,textarea{font-size:16px}
 .dircard b{font-size:14px}
 .dircard span{font-size:12px;color:var(--muted)}
 .dircard em{font-style:normal;font-size:11px;color:var(--ok);font-weight:700}
-.dircard.on{border-color:var(--accent);background:#fdf6e9}
-.xcard{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;background:#fcfbf9}
+.dircard.on{border-color:var(--accent);background:#efefef}
+.xcard{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;background:#fbfbfb}
 .xcard .xg{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px;margin-top:8px}
 .xcard .xf{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
 .totbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#fff;border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.07);display:flex;align-items:center;gap:12px;padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
@@ -127,17 +127,18 @@ body.noscroll{overflow:hidden}
 .pbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .pbar input{flex:1;min-width:180px}
 .devbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-nav.tabs button i{font-style:normal}
+nav.tabs button i{font-style:normal;filter:grayscale(1)}
+.addbar .btn span,.tools .btn,.devbar .btn,.totbar .btn{filter:grayscale(1)}
 body.has-totbar main{padding-bottom:90px}
 @media (max-width:899px){
   header.top{padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top))}
-  header.top .logo{width:32px;height:32px}
+  header.top .logo{width:38px;height:38px}
   header.top h1{font-size:16px}
   header.top small{font-size:11px}
   nav.tabs{position:fixed;top:auto;bottom:0;left:0;right:0;z-index:30;border-top:1px solid var(--line);border-bottom:0;padding:4px 4px calc(4px + env(safe-area-inset-bottom));gap:0;box-shadow:0 -2px 10px rgba(0,0,0,.05)}
   nav.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px;font-size:11px;border-radius:10px}
   nav.tabs button i{font-size:20px;line-height:1.2}
-  nav.tabs button.on{background:#f3ede2;color:var(--ink);font-weight:700}
+  nav.tabs button.on{background:#ebebeb;color:var(--ink);font-weight:700}
   main{padding:10px 10px 90px}
   body.has-totbar main{padding-bottom:160px}
   .totbar{bottom:calc(58px + env(safe-area-inset-bottom));padding:8px 14px;border-radius:14px 14px 0 0}
@@ -168,10 +169,14 @@ body.has-totbar main{padding-bottom:90px}
 .dv-head .co{display:flex;gap:12px;align-items:center}
 .dv-head .co svg{width:54px;height:54px}
 .dv-head h2{margin:0;font-size:24px}
+.wm{letter-spacing:.18em;font-weight:300}
+.wm b{font-weight:800}
+header.top small{letter-spacing:.14em}
+.dv-head .co svg{width:64px;height:64px}
 .dv-head .meta{text-align:right;font-size:13px}
 .dv-head .meta b{font-size:20px;display:block;color:var(--accent-d)}
 .dv-parties{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;font-size:13px}
-.dv-parties div{background:#faf8f4;padding:10px 12px;border-radius:8px}
+.dv-parties div{background:#f7f7f7;padding:10px 12px;border-radius:8px}
 .dv-parties h4{margin:0 0 4px;font-size:11px;color:var(--muted);text-transform:uppercase}
 #devis-doc h3{font-size:13px;text-transform:uppercase;color:var(--muted);margin:18px 0 6px}
 .dv-tot{margin-left:auto;width:min(340px,100%);margin-top:10px}
@@ -201,8 +206,8 @@ body.has-totbar main{padding-bottom:90px}
 <body>
 
 <header class="top">
-  <svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="10" fill="#b8893b"/><path d="M8 14h32v4H8zM8 14l4 6h24l4-6" fill="#fff" opacity=".95"/><path d="M14 24h20M14 30h20M14 36h20" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
-  <div><h1 id="hdr-name">Abdou Deco</h1><small>Devis plaque de plâtre &amp; faux plafonds · <span id="ver"></span></small></div>
+  <svg class="logo" viewBox="0 0 200 200" aria-hidden="true"><g stroke="#fff"><g fill="none" stroke-linecap="butt" stroke-miterlimit="10" transform="translate(0,-10)"><path d="M48 150 L91 44" stroke-width="9"/><path d="M92 37.5 V150" stroke-width="9"/><path d="M63 112 H92" stroke-width="6"/><path d="M92 42 H100 A54 54 0 0 1 100 150 H92" stroke-width="9"/><path stroke-width="3" stroke-linecap="round" d="M108 82.1 L120 61.4 M113.9 88 L134.6 76 M116 96 L140 96 M113.9 104 L134.6 116 M108 109.9 L120 130.6"/><path d="M40 166 H160" stroke-width="4"/><path d="M50 175 H150" stroke-width="2.5"/><path d="M60 182 H140" stroke-width="1.5"/></g><circle cx="100" cy="86" r="5" fill="#fff" stroke="none"/></g></svg>
+  <div><h1 id="hdr-name" class="wm"><b>ABDOU</b> DECO</h1><small>PLÂTRE · FAUX PLAFONDS · <span id="ver"></span></small></div>
   <span class="net" id="net">En ligne</span>
 </header>
 
@@ -376,6 +381,8 @@ const DEF = {
   prices:{plaque:0,corniere:0,fourrure:0,tige:0,rail:0,montant:0,cheville:0,vis:0,bande:0,enduit:0,mo_plafond:0,mo_mur:0},
   defaultNotes:'Prix valables pour les dimensions indiquées. Toute modification sur chantier fera l\'objet d\'un avenant.\nAcompte de 50 % à la commande, solde à la fin des travaux.',
 };
+const MARK_SVG=c=>`<svg viewBox="0 0 200 200" aria-hidden="true"><g stroke="${c}"><g fill="none" stroke-linecap="butt" stroke-miterlimit="10" transform="translate(0,-10)"><path d="M48 150 L91 44" stroke-width="9"/><path d="M92 37.5 V150" stroke-width="9"/><path d="M63 112 H92" stroke-width="6"/><path d="M92 42 H100 A54 54 0 0 1 100 150 H92" stroke-width="9"/><path stroke-width="3" stroke-linecap="round" d="M108 82.1 L120 61.4 M113.9 88 L134.6 76 M116 96 L140 96 M113.9 104 L134.6 116 M108 109.9 L120 130.6"/><path d="M40 166 H160" stroke-width="4"/><path d="M50 175 H150" stroke-width="2.5"/><path d="M60 182 H140" stroke-width="1.5"/></g><circle cx="100" cy="86" r="5" fill="${c}" stroke="none"/></g></svg>`;
+const wordmark=n=>{const w=String(n||'Abdou Deco').toUpperCase().split(/\s+/).map(esc);return `<b>${w[0]}</b> ${w.slice(1).join(' ')}`};
 const LS_S='abdoudeco.settings', LS_P='abdoudeco.projects';
 const merge=(a,b)=>{for(const k in b){if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k]))a[k]=merge(a[k]||{},b[k]);else a[k]=b[k]}return a};
 let S = merge(structuredClone(DEF), JSON.parse(localStorage.getItem(LS_S)||'{}'));
@@ -614,7 +621,7 @@ function drawEditor(r){
     <div class="tools">${tools}</div>
     <div class="hint" style="margin:0 0 6px">${hint}</div>
     <svg data-svg class="drawsvg${open||edit?' live':''}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif"></svg>
-    <div class="legend"><span><i style="background:#b8893b"></i>Cornières</span><span><i style="background:#1f2a37"></i>Fourrures ${fq(S.spacing*100)} cm</span><span><i style="background:#b91c1c;height:8px;width:8px;border-radius:50%"></i>Tiges ${fq(S.tigeSpacing*100)} cm</span><span>Grille 50 cm</span></div>
+    <div class="legend"><span><i style="background:#111111"></i>Cornières</span><span><i style="background:#a3a3a3"></i>Fourrures ${fq(S.spacing*100)} cm</span><span><i style="background:#111;height:8px;width:8px;border-radius:50%"></i>Tiges ${fq(S.tigeSpacing*100)} cm</span><span>Grille 50 cm</span></div>
   </div>`;
 }
 function drawPoly(el,r,c){
@@ -637,17 +644,17 @@ function drawPoly(el,r,c){
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.style.height=H+'px';
   let s='';
   // grille 50 cm (traits forts tous les mètres)
-  for(let x=Math.ceil(v.x*2)/2;x<=v.x+v.w;x+=0.5){const m=Math.abs(x-Math.round(x))<1e-6;s+=`<line x1="${X(x)}" y1="0" x2="${X(x)}" y2="${H}" stroke="${m?'#e2ddd3':'#f1eee8'}"/>`}
-  for(let y=Math.ceil(v.y*2)/2;y<=v.y+v.h;y+=0.5){const m=Math.abs(y-Math.round(y))<1e-6;s+=`<line x1="0" y1="${Y(y)}" x2="${W}" y2="${Y(y)}" stroke="${m?'#e2ddd3':'#f1eee8'}"/>`}
+  for(let x=Math.ceil(v.x*2)/2;x<=v.x+v.w;x+=0.5){const m=Math.abs(x-Math.round(x))<1e-6;s+=`<line x1="${X(x)}" y1="0" x2="${X(x)}" y2="${H}" stroke="${m?'#e2e2e2':'#f3f3f3'}"/>`}
+  for(let y=Math.ceil(v.y*2)/2;y<=v.y+v.h;y+=0.5){const m=Math.abs(y-Math.round(y))<1e-6;s+=`<line x1="0" y1="${Y(y)}" x2="${W}" y2="${Y(y)}" stroke="${m?'#e2e2e2':'#f3f3f3'}"/>`}
   const g=c&&c.geom;
   if(!open&&n>=3){
-    s+=`<polygon points="${pts.map(p=>X(p[0])+','+Y(p[1])).join(' ')}" fill="#faf7f1"/>`;
+    s+=`<polygon points="${pts.map(p=>X(p[0])+','+Y(p[1])).join(' ')}" fill="#f5f5f4"/>`;
     if(g&&c.opts){                                   // fourrures + tiges sur la forme réelle
       const lay=c.opts[c.dir],ox=g.ox,oy=g.oy;
       lay.segs.forEach(sg=>{
         const A=lay.horiz?[sg.x1,sg.y]:[sg.y,sg.x1],B=lay.horiz?[sg.x2,sg.y]:[sg.y,sg.x2];
-        s+=`<line x1="${X(A[0]+ox)}" y1="${Y(A[1]+oy)}" x2="${X(B[0]+ox)}" y2="${Y(B[1]+oy)}" stroke="#1f2a37" stroke-width="2"/>`;
-        sg.t.forEach(t=>{const P=lay.horiz?[t,sg.y]:[sg.y,t];s+=`<circle cx="${X(P[0]+ox)}" cy="${Y(P[1]+oy)}" r="3" fill="#b91c1c"/>`});
+        s+=`<line x1="${X(A[0]+ox)}" y1="${Y(A[1]+oy)}" x2="${X(B[0]+ox)}" y2="${Y(B[1]+oy)}" stroke="#a3a3a3" stroke-width="2"/>`;
+        sg.t.forEach(t=>{const P=lay.horiz?[t,sg.y]:[sg.y,t];s+=`<circle cx="${X(P[0]+ox)}" cy="${Y(P[1]+oy)}" r="3" fill="#111"/>`});
       });
     }
   }
@@ -656,7 +663,7 @@ function drawPoly(el,r,c){
   const sign=(()=>{let a=0;for(let i=0;i<n;i++){const p=pts[i],q=pts[(i+1)%n];a+=p[0]*q[1]-q[0]*p[1]}return a>=0?1:-1})();
   for(let i=0;i<ne;i++){
     const p=pts[i],q=pts[(i+1)%n];
-    s+=`<line x1="${X(p[0])}" y1="${Y(p[1])}" x2="${X(q[0])}" y2="${Y(q[1])}" stroke="#b8893b" stroke-width="5" stroke-linecap="round"/>`;
+    s+=`<line x1="${X(p[0])}" y1="${Y(p[1])}" x2="${X(q[0])}" y2="${Y(q[1])}" stroke="#111111" stroke-width="5" stroke-linecap="round"/>`;
   }
   for(let i=0;i<ne;i++){
     const p=pts[i],q=pts[(i+1)%n],dx=q[0]-p[0],dy=q[1]-p[1],l=Math.hypot(dx,dy);if(l<0.01)continue;
@@ -664,24 +671,24 @@ function drawPoly(el,r,c){
     const txt=fq(l)+' m', tw=txt.length*7.4+12, off=27;      // cote écrite le long du mur
     const lx=mx+nx*off,ly=my+ny*off;
     let ang=Math.atan2(dy,dx)*180/Math.PI;if(ang>90)ang-=180;if(ang<-90)ang+=180;
-    s+=`<g class="${live?'elabel':''}" ${live?`data-e="${i}"`:''} transform="translate(${lx} ${ly}) rotate(${ang})"><rect x="${-tw/2}" y="-11" width="${tw}" height="22" rx="11" fill="#fff" stroke="#b8893b"/>
-        <text x="0" y="5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a37">${txt}</text></g>`;
-    if(st.edit)s+=`<g class="mid" data-m="${i}"><circle cx="${mx}" cy="${my}" r="9" fill="#fff" stroke="#94692a" stroke-width="1.5"/><text x="${mx}" y="${my+4.5}" text-anchor="middle" font-size="14" fill="#94692a">+</text></g>`;
+    s+=`<g class="${live?'elabel':''}" ${live?`data-e="${i}"`:''} transform="translate(${lx} ${ly}) rotate(${ang})"><rect x="${-tw/2}" y="-11" width="${tw}" height="22" rx="11" fill="#fff" stroke="#111111"/>
+        <text x="0" y="5" text-anchor="middle" font-size="13" font-weight="700" fill="#111111">${txt}</text></g>`;
+    if(st.edit)s+=`<g class="mid" data-m="${i}"><circle cx="${mx}" cy="${my}" r="9" fill="#fff" stroke="#444444" stroke-width="1.5"/><text x="${mx}" y="${my+4.5}" text-anchor="middle" font-size="14" fill="#444444">+</text></g>`;
   }
   // trait élastique pendant le dessin
   if(open&&n&&st.hover){
     const p=pts[n-1],q=st.hover,l=Math.hypot(q[0]-p[0],q[1]-p[1]);
-    s+=`<line x1="${X(p[0])}" y1="${Y(p[1])}" x2="${X(q[0])}" y2="${Y(q[1])}" stroke="#b8893b" stroke-width="3" stroke-dasharray="6 5"/>`;
-    s+=`<text x="${X(q[0])+12}" y="${Y(q[1])-10}" font-size="13" font-weight="700" fill="#94692a" paint-order="stroke" stroke="#fff" stroke-width="4">${fq(l)} m</text>`;
+    s+=`<line x1="${X(p[0])}" y1="${Y(p[1])}" x2="${X(q[0])}" y2="${Y(q[1])}" stroke="#111111" stroke-width="3" stroke-dasharray="6 5"/>`;
+    s+=`<text x="${X(q[0])+12}" y="${Y(q[1])-10}" font-size="13" font-weight="700" fill="#444444" paint-order="stroke" stroke="#fff" stroke-width="4">${fq(l)} m</text>`;
   }
   // coins : grosse zone de toucher (doigt) en mode dessin / modification
   pts.forEach((p,i)=>{
-    if(!live){s+=`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="4" fill="#94692a"/>`;return}
+    if(!live){s+=`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="4" fill="#444444"/>`;return}
     const first=open&&i===0&&n>=3, sel=st.edit&&st.sel===i;
     s+=`<circle data-v="${i}" cx="${X(p[0])}" cy="${Y(p[1])}" r="24" fill="#000" fill-opacity="0"/>`;
-    s+=`<circle data-v="${i}" class="vtx" cx="${X(p[0])}" cy="${Y(p[1])}" r="${first?13:sel?13:10}" fill="${first?'#15803d':sel?'#b8893b':'#fff'}" stroke="${first?'#fff':'#94692a'}" stroke-width="3"/>`;
+    s+=`<circle data-v="${i}" class="vtx" cx="${X(p[0])}" cy="${Y(p[1])}" r="${first?13:sel?13:10}" fill="${first?'#15803d':sel?'#111111':'#fff'}" stroke="${first?'#fff':'#444444'}" stroke-width="3"/>`;
   });
-  if(n&&live)s+=`<text x="${X(pts[0][0])-14}" y="${Y(pts[0][1])-14}" text-anchor="end" font-size="11" fill="#94692a">départ</text>`;
+  if(n&&live)s+=`<text x="${X(pts[0][0])-14}" y="${Y(pts[0][1])-14}" text-anchor="end" font-size="11" fill="#444444">départ</text>`;
   if(!n)s+=`<text x="${W/2}" y="${H/2}" text-anchor="middle" font-size="15" fill="#6b7280">Touchez la grille pour placer le premier coin</text>`;
   svg.innerHTML=s;
 }
@@ -900,21 +907,21 @@ function planSVG(r,c){
   const W=g.w*k+2*pad, H=g.h*k+2*pad, X=x=>pad+x*k, Y=y=>pad+y*k;
   const n=g.pts.length;
   let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">`;
-  s+=`<polygon points="${g.pts.map(p=>X(p[0])+','+Y(p[1])).join(' ')}" fill="#faf7f1" stroke="none"/>`;
+  s+=`<polygon points="${g.pts.map(p=>X(p[0])+','+Y(p[1])).join(' ')}" fill="#f5f5f4" stroke="none"/>`;
   lay.segs.forEach(sg=>{
     const A=lay.horiz?[sg.x1,sg.y]:[sg.y,sg.x1], B=lay.horiz?[sg.x2,sg.y]:[sg.y,sg.x2];
-    s+=`<line x1="${X(A[0])}" y1="${Y(A[1])}" x2="${X(B[0])}" y2="${Y(B[1])}" stroke="#1f2a37" stroke-width="2"/>`;
-    sg.t.forEach(t=>{const P=lay.horiz?[t,sg.y]:[sg.y,t];s+=`<circle cx="${X(P[0])}" cy="${Y(P[1])}" r="3.2" fill="#b91c1c"/>`});
+    s+=`<line x1="${X(A[0])}" y1="${Y(A[1])}" x2="${X(B[0])}" y2="${Y(B[1])}" stroke="#a3a3a3" stroke-width="2"/>`;
+    sg.t.forEach(t=>{const P=lay.horiz?[t,sg.y]:[sg.y,t];s+=`<circle cx="${X(P[0])}" cy="${Y(P[1])}" r="3.2" fill="#111"/>`});
   });
   for(let i=0;i<n;i++){
     const p=g.pts[i],q=g.pts[(i+1)%n];
-    s+=`<line x1="${X(p[0])}" y1="${Y(p[1])}" x2="${X(q[0])}" y2="${Y(q[1])}" stroke="#b8893b" stroke-width="4" stroke-linecap="round"/>`;
+    s+=`<line x1="${X(p[0])}" y1="${Y(p[1])}" x2="${X(q[0])}" y2="${Y(q[1])}" stroke="#111111" stroke-width="4" stroke-linecap="round"/>`;
     const dx=q[0]-p[0],dy=q[1]-p[1],l=Math.hypot(dx,dy)||1;
     const nx=(g.sign>0?dy:-dy)/l, ny=(g.sign>0?-dx:dx)/l;
-    s+=`<text x="${X((p[0]+q[0])/2)+nx*17}" y="${Y((p[1]+q[1])/2)+ny*17+4}" text-anchor="middle" font-size="12" font-weight="600" fill="#374151" paint-order="stroke" stroke="#fff" stroke-width="3">${fq(g.edges[i])} m</text>`;
+    s+=`<text x="${X((p[0]+q[0])/2)+nx*17}" y="${Y((p[1]+q[1])/2)+ny*17+4}" text-anchor="middle" font-size="12" font-weight="600" fill="#2b2b2b" paint-order="stroke" stroke="#fff" stroke-width="3">${fq(g.edges[i])} m</text>`;
   }
   s+='</svg>';
-  return s+`<div class="legend"><span><i style="background:#b8893b"></i>Cornières (murs)</span><span><i style="background:#1f2a37"></i>Fourrures tous les ${fq(sp*100)} cm</span><span><i style="background:#b91c1c;height:8px;width:8px;border-radius:50%"></i>Tiges tous les ${fq(tsp*100)} cm</span></div>`;
+  return s+`<div class="legend"><span><i style="background:#111111"></i>Cornières (murs)</span><span><i style="background:#a3a3a3"></i>Fourrures tous les ${fq(sp*100)} cm</span><span><i style="background:#111;height:8px;width:8px;border-radius:50%"></i>Tiges tous les ${fq(tsp*100)} cm</span></div>`;
 }
 $('#add-plafond').onclick=()=>addRoom(newRoom('plafond'));
 $('#add-poly').onclick=()=>{const r=newRoom('plafond');r.shape='poly';r.pts=[];r.open=true;r.name='Pièce';addRoom(r)};
@@ -976,8 +983,8 @@ function renderDevis(){
   t.ex.forEach(e=>lines.push([esc(e.label),`${fq(e.qty)} ${esc(e.unit)}`,e.pu,e.tot]));
   $('#devis-doc').innerHTML=`
     <div class="dv-head">
-      <div class="co">${$('header.top .logo').outerHTML}
-        <div><h2>${esc(co.name)}</h2><div style="font-size:13px;color:var(--muted)">${esc(co.slogan)}</div>
+      <div class="co">${MARK_SVG('#111')}
+        <div><h2 class="wm">${wordmark(co.name)}</h2><div style="font-size:13px;color:var(--muted)">${esc(co.slogan)}</div>
         <div style="font-size:12px;color:var(--muted)">${[co.phone,co.email,co.address].filter(Boolean).map(esc).join(' · ')}</div>
         ${co.legal?`<div style="font-size:11px;color:var(--muted)">${esc(co.legal)}</div>`:''}</div></div>
       <div class="meta"><b>DEVIS</b>N° ${esc(p.no)}<br>Date : ${d.toLocaleDateString('fr-FR')}<br>Validité : ${esc(S.validity)} jours</div>
@@ -1031,7 +1038,7 @@ function renderParams(){
   $$('[data-s]').forEach(i=>{
     i.value=getPath(S,i.dataset.s)??'';
     i.oninput=()=>{const v=i.type==='number'?num(i.value):i.value;setPath(S,i.dataset.s,v);saveS();
-      if(i.dataset.s==='company.name')$('#hdr-name').textContent=S.company.name||'Abdou Deco'};
+      if(i.dataset.s==='company.name')$('#hdr-name').innerHTML=wordmark(S.company.name)};
   });
 }
 $('#export').onclick=()=>{
@@ -1053,7 +1060,7 @@ $('#import').onchange=async e=>{
 /* ===================== Hors ligne ===================== */
 function net(){const on=navigator.onLine;$('#net').textContent=on?'En ligne':'Hors ligne';$('#net').classList.toggle('off',!on)}
 addEventListener('online',net);addEventListener('offline',net);net();
-const APP_VERSION='v8';$('#ver').textContent=APP_VERSION;
+const APP_VERSION='v9';$('#ver').textContent=APP_VERSION;
 // Mise à jour automatique : dès qu'une nouvelle version est en ligne, l'app se recharge toute seule
 if('serviceWorker' in navigator){
   let reloaded=false;const hadSW=!!navigator.serviceWorker.controller;
@@ -1065,7 +1072,7 @@ if('serviceWorker' in navigator){
 }
 if(navigator.storage?.persist)navigator.storage.persist();
 
-$('#hdr-name').textContent=S.company.name||'Abdou Deco';
+$('#hdr-name').innerHTML=wordmark(S.company.name);
 show('projets');
 </script>
 </body>

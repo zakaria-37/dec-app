@@ -1,5 +1,5 @@
-const CACHE = 'abdoudeco-v8';
-const FILES = ['./', './index.html', './manifest.json', './icon.svg'];
+const CACHE = 'abdoudeco-v9';
+const FILES = ['./', './index.html', './manifest.json', './icon.svg', './icon-180.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
 });
