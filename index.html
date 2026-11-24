@@ -78,7 +78,8 @@ tfoot td{font-weight:700}
 .shape-sw{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:13px;color:var(--muted)}
 .shape-sw .btn.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .drawsvg{width:100%;display:block;background:#fff;border:1px solid var(--line);border-radius:8px;user-select:none;-webkit-user-select:none}
-.drawsvg.open{touch-action:none;cursor:crosshair}
+.drawsvg.live{touch-action:none;cursor:crosshair}
+.draw.editing .drawsvg{outline:3px solid var(--accent);outline-offset:-3px}
 .drawsvg .vtx{cursor:grab;touch-action:none}
 .drawsvg .elabel,.drawsvg .mid{cursor:pointer}
 .chk{flex-direction:row;align-items:center;gap:6px;font-size:13px;color:var(--ink)}
@@ -589,29 +590,37 @@ const SNAP=0.05;                       // aimantation : 5 cm
 const DRAW={};                         // état d'édition par pièce (sélection, vue, glisser)
 const snapv=v=>Math.round(v/SNAP)*SNAP;
 function drawEditor(r){
-  const st=DRAW[r.id]||{}, open=r.open, n=(r.pts||[]).length;
-  return `<div class="draw${st.full?' full':''}">
-    <div class="fullbar"><b>${esc(r.name)||'Pièce'}</b><span data-mini></span><button class="btn sm pri" data-full>✓ Terminé</button></div>
-    <div class="tools">
-      <select data-tpl><option value="">📐 Modèle de forme…</option>${Object.entries(TEMPLATES).map(([k,t])=>`<option value="${k}">${t.label}</option>`).join('')}</select>
-      <label class="chk"><input type="checkbox" data-ortho${r.ortho!==false?' checked':''}> Angles droits</label>
-      <button class="btn sm" data-full data-fullon>⤢ Plein écran</button>
-      ${open?`<button class="btn sm" data-undo${n?'':' disabled'}>↶ Annuler</button>
-              <button class="btn sm pri" data-finish${n>=3?'':' disabled'}>✓ Fermer la forme</button>`
-            :`<button class="btn sm del" data-delv${st.sel!=null&&n>3?'':' disabled'}>✕ Supprimer le coin</button>`}
-      <button class="btn sm" data-new>✏️ Nouveau dessin</button>
-    </div>
-    <div class="hint" style="margin:0 0 6px">${open
-      ?'<b>Dessin :</b> touchez la grille pour placer chaque coin, dans l\'ordre. Touchez le <b style="color:#15803d">point vert</b> pour fermer. Touchez une cote pour taper la mesure.'
-      :'Glissez un <b>coin</b> · touchez une <b>cote</b> pour taper la mesure · <b>＋</b> pour ajouter un coin.'}</div>
-    <svg data-svg class="drawsvg${open?' open':''}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif"></svg>
+  const st=DRAW[r.id]||{}, open=r.open, n=(r.pts||[]).length, edit=!open&&st.edit;
+  const tpl=`<select data-tpl><option value="">📐 Modèle de forme…</option>${Object.entries(TEMPLATES).map(([k,t])=>`<option value="${k}">${t.label}</option>`).join('')}</select>`;
+  const ortho=`<label class="chk"><input type="checkbox" data-ortho${r.ortho!==false?' checked':''}> Angles droits</label>`;
+  let tools,hint;
+  if(open){
+    tools=`${tpl}${ortho}<button class="btn sm" data-undo${n?'':' disabled'}>↶ Annuler le point</button>
+      <button class="btn sm pri" data-finish${n>=3?'':' disabled'}>✓ Fermer la forme</button>
+      <button class="btn sm" data-full data-fullon>⤢ Plein écran</button><button class="btn sm" data-new>🗑 Effacer</button>`;
+    hint='<b>Dessin :</b> touchez la grille pour placer chaque coin, dans l\'ordre. Touchez le <b style="color:#15803d">point vert</b> pour fermer. Touchez une cote pour taper la mesure.';
+  }else if(edit){
+    tools=`<button class="btn sm" data-hundo${st.hist&&st.hist.length?'':' disabled'}>↶ Annuler</button>
+      <button class="btn sm del" data-delv${st.sel!=null&&n>3?'':' disabled'}>✕ Supprimer le coin</button>
+      ${ortho}<button class="btn sm pri" data-editdone>✓ Terminer</button>`;
+    hint='<b>Modification :</b> glissez un <b>coin</b> avec le doigt · touchez une <b>cote</b> pour taper la mesure exacte · <b>＋</b> ajoute un coin · touchez un coin puis « Supprimer le coin ».';
+  }else{
+    tools=`<button class="btn sm pri" data-editon>✏️ Modifier le dessin</button>
+      <button class="btn sm" data-full data-fullon>⤢ Plein écran</button>${tpl}<button class="btn sm" data-new>🔄 Redessiner</button>`;
+    hint='🔒 Dessin verrouillé (vous pouvez faire défiler sans le toucher). Touchez <b>« Modifier le dessin »</b> pour changer la forme ou les mesures.';
+  }
+  return `<div class="draw${st.full?' full':''}${edit?' editing':''}">
+    <div class="fullbar"><b>${esc(r.name)||'Pièce'}</b><span data-mini></span>${edit?'':'<button class="btn sm pri" data-full>✓ Fermer</button>'}</div>
+    <div class="tools">${tools}</div>
+    <div class="hint" style="margin:0 0 6px">${hint}</div>
+    <svg data-svg class="drawsvg${open||edit?' live':''}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif"></svg>
     <div class="legend"><span><i style="background:#b8893b"></i>Cornières</span><span><i style="background:#1f2a37"></i>Fourrures ${fq(S.spacing*100)} cm</span><span><i style="background:#b91c1c;height:8px;width:8px;border-radius:50%"></i>Tiges ${fq(S.tigeSpacing*100)} cm</span><span>Grille 50 cm</span></div>
   </div>`;
 }
 function drawPoly(el,r,c){
   const svg=el.querySelector('[data-svg]');if(!svg)return;
   const st=DRAW[r.id]=DRAW[r.id]||{};
-  const pts=r.pts||[], n=pts.length, open=r.open;
+  const pts=r.pts||[], n=pts.length, open=r.open, live=open||st.edit;
   const fits=st.view&&open&&n&&pts.every(p=>p[0]>st.view.x+0.3&&p[0]<st.view.x+st.view.w-0.3&&p[1]>st.view.y+0.3&&p[1]<st.view.y+st.view.h-0.3);
   const PW=svg.clientWidth||700, M=46;   // marge en pixels pour les cotes
   const Hm=st.full?Math.max(innerHeight-190,300):Math.max(PW*0.85,380);
@@ -655,9 +664,9 @@ function drawPoly(el,r,c){
     const txt=fq(l)+' m', tw=txt.length*7.4+12, off=27;      // cote écrite le long du mur
     const lx=mx+nx*off,ly=my+ny*off;
     let ang=Math.atan2(dy,dx)*180/Math.PI;if(ang>90)ang-=180;if(ang<-90)ang+=180;
-    s+=`<g class="elabel" data-e="${i}" transform="translate(${lx} ${ly}) rotate(${ang})"><rect x="${-tw/2}" y="-11" width="${tw}" height="22" rx="11" fill="#fff" stroke="#b8893b"/>
+    s+=`<g class="${live?'elabel':''}" ${live?`data-e="${i}"`:''} transform="translate(${lx} ${ly}) rotate(${ang})"><rect x="${-tw/2}" y="-11" width="${tw}" height="22" rx="11" fill="#fff" stroke="#b8893b"/>
         <text x="0" y="5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a37">${txt}</text></g>`;
-    if(!open)s+=`<g class="mid" data-m="${i}"><circle cx="${mx}" cy="${my}" r="9" fill="#fff" stroke="#94692a" stroke-width="1.5"/><text x="${mx}" y="${my+4.5}" text-anchor="middle" font-size="14" fill="#94692a">+</text></g>`;
+    if(st.edit)s+=`<g class="mid" data-m="${i}"><circle cx="${mx}" cy="${my}" r="9" fill="#fff" stroke="#94692a" stroke-width="1.5"/><text x="${mx}" y="${my+4.5}" text-anchor="middle" font-size="14" fill="#94692a">+</text></g>`;
   }
   // trait élastique pendant le dessin
   if(open&&n&&st.hover){
@@ -665,38 +674,61 @@ function drawPoly(el,r,c){
     s+=`<line x1="${X(p[0])}" y1="${Y(p[1])}" x2="${X(q[0])}" y2="${Y(q[1])}" stroke="#b8893b" stroke-width="3" stroke-dasharray="6 5"/>`;
     s+=`<text x="${X(q[0])+12}" y="${Y(q[1])-10}" font-size="13" font-weight="700" fill="#94692a" paint-order="stroke" stroke="#fff" stroke-width="4">${fq(l)} m</text>`;
   }
-  // coins
+  // coins : grosse zone de toucher (doigt) en mode dessin / modification
   pts.forEach((p,i)=>{
-    const first=open&&i===0&&n>=3, sel=!open&&st.sel===i;
-    s+=`<circle data-v="${i}" class="vtx" cx="${X(p[0])}" cy="${Y(p[1])}" r="${first?13:10}" fill="${first?'#15803d':sel?'#b8893b':'#fff'}" stroke="${first?'#fff':'#94692a'}" stroke-width="3"/>`;
+    if(!live){s+=`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="4" fill="#94692a"/>`;return}
+    const first=open&&i===0&&n>=3, sel=st.edit&&st.sel===i;
+    s+=`<circle data-v="${i}" cx="${X(p[0])}" cy="${Y(p[1])}" r="24" fill="#000" fill-opacity="0"/>`;
+    s+=`<circle data-v="${i}" class="vtx" cx="${X(p[0])}" cy="${Y(p[1])}" r="${first?13:sel?13:10}" fill="${first?'#15803d':sel?'#b8893b':'#fff'}" stroke="${first?'#fff':'#94692a'}" stroke-width="3"/>`;
   });
-  if(n)s+=`<text x="${X(pts[0][0])-14}" y="${Y(pts[0][1])-14}" text-anchor="end" font-size="11" fill="#94692a">départ</text>`;
+  if(n&&live)s+=`<text x="${X(pts[0][0])-14}" y="${Y(pts[0][1])-14}" text-anchor="end" font-size="11" fill="#94692a">départ</text>`;
   if(!n)s+=`<text x="${W/2}" y="${H/2}" text-anchor="middle" font-size="15" fill="#6b7280">Touchez la grille pour placer le premier coin</text>`;
   svg.innerHTML=s;
+}
+// Nettoyage : enlève les points en double et les « allers-retours » (traits en trop sur un mur)
+function cleanPts(pts){
+  const a=(pts||[]).map(p=>[r2(num(p[0])),r2(num(p[1]))]);
+  let changed=true;
+  while(changed&&a.length>3){
+    changed=false;
+    for(let i=0;i<a.length;i++){
+      const n=a.length,p=a[(i+n-1)%n],c=a[i],q=a[(i+1)%n];
+      const d1=[c[0]-p[0],c[1]-p[1]],d2=[q[0]-c[0],q[1]-c[1]];
+      const l1=Math.hypot(d1[0],d1[1]);
+      const cross=d1[0]*d2[1]-d1[1]*d2[0],dot=d1[0]*d2[0]+d1[1]*d2[1];
+      if(l1<0.01||(Math.abs(cross)<1e-4&&dot<0)){a.splice(i,1);changed=true;break}
+    }
+  }
+  return a;
 }
 // Fermer la forme ; avec « angles droits », le dernier mur est redressé sur le premier point
 function closeShape(r){
   const n=r.pts.length;if(n<3)return;
   if(r.ortho!==false){const f=r.pts[0],l=r.pts[n-1];
-    if(Math.abs(l[0]-f[0])<Math.abs(l[1]-f[1]))l[0]=f[0];else l[1]=f[1];
-    if(n>3&&Math.hypot(l[0]-f[0],l[1]-f[1])<0.01)r.pts.pop();}
+    if(Math.abs(l[0]-f[0])<Math.abs(l[1]-f[1]))l[0]=f[0];else l[1]=f[1];}
+  r.pts=cleanPts(r.pts);
   r.open=false;
 }
 function attachDraw(el,r,rebuild,refresh){
   const svg=el.querySelector('[data-svg]');if(!svg)return;
   const st=DRAW[r.id]=DRAW[r.id]||{};
   const ortho=()=>r.ortho!==false;
+  const live=()=>r.open||st.edit;
+  const snapHist=()=>{st.hist=st.hist||[];st.hist.push(JSON.stringify(r.pts));if(st.hist.length>60)st.hist.shift()};
   const world=e=>{const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const q=p.matrixTransform(svg.getScreenCTM().inverse());return [st.view.x+q.x/st.k,st.view.y+q.y/st.k]};
   const nextPoint=e=>{
     let p=world(e).map(snapv);const last=r.pts[r.pts.length-1];
     if(ortho()&&last){if(Math.abs(p[0]-last[0])>=Math.abs(p[1]-last[1]))p[1]=last[1];else p[0]=last[0]}
     return p.map(r2);
   };
+  // iPhone : empêcher la page de défiler pendant qu'on dessine / modifie
+  svg.addEventListener('touchmove',e=>{if(live())e.preventDefault()},{passive:false});
   svg.onpointerdown=e=>{
     const t=e.target.closest('[data-v]');
-    if(t&&!r.open){
+    if(t&&st.edit&&!r.open){
       const i=+t.dataset.v;st.drag={i,orig:r.pts.map(p=>[...p]),moved:false};
-      svg.setPointerCapture(e.pointerId);e.preventDefault();
+      try{svg.setPointerCapture(e.pointerId)}catch(_){}
+      e.preventDefault();
     }
   };
   svg.onpointermove=e=>{
@@ -704,6 +736,7 @@ function attachDraw(el,r,rebuild,refresh){
       const d=st.drag,n=r.pts.length,i=d.i,o=d.orig;
       const p=world(e).map(snapv).map(r2);
       if(!d.moved&&Math.hypot(p[0]-o[i][0],p[1]-o[i][1])<0.03)return;
+      if(!d.moved){st.hist=st.hist||[];st.hist.push(JSON.stringify(o))}
       d.moved=true;r.pts=o.map(q=>[...q]);r.pts[i]=p;
       if(ortho())[(i+n-1)%n,(i+1)%n].forEach(j=>{        // garder les murs voisins droits
         if(Math.abs(o[j][1]-o[i][1])<1e-6)r.pts[j][1]=p[1];
@@ -712,49 +745,66 @@ function attachDraw(el,r,rebuild,refresh){
       refresh();
     }else if(r.open&&r.pts.length&&e.pointerType==='mouse'){st.hover=nextPoint(e);drawPoly(el,r,null)}
   };
-  svg.onpointerup=e=>{
+  const endDrag=()=>{
     if(!st.drag)return;
     const d=st.drag;st.drag=null;
-    if(d.moved){st.noClick=true;setTimeout(()=>st.noClick=false,0);persist();refresh()}
+    if(d.moved){st.noClick=true;setTimeout(()=>st.noClick=false,50);r.pts=cleanPts(r.pts);if(st.sel>=r.pts.length)st.sel=null;persist();rebuild()}
     else{st.sel=st.sel===d.i?null:d.i;rebuild()}
   };
+  svg.onpointerup=endDrag;
+  svg.onpointercancel=endDrag;
   svg.onpointerleave=()=>{if(st.hover){st.hover=null;if(r.open)drawPoly(el,r,null)}};
   svg.onclick=e=>{
-    if(st.noClick)return;
+    if(st.noClick||!live())return;
     const lab=e.target.closest('[data-e]'),mid=e.target.closest('[data-m]'),vt=e.target.closest('[data-v]');
     const n=r.pts.length;
     if(lab){                                            // taper la mesure exacte d'un mur
       const i=+lab.dataset.e,a=r.pts[i],b=r.pts[(i+1)%n],L=Math.hypot(b[0]-a[0],b[1]-a[1]);
       const val=prompt(`Longueur exacte du mur (m) :`,String(r2(L)).replace('.',','));
       if(val==null)return;const nl=num(val);if(!(nl>0)){alert('Longueur invalide');return}
+      snapHist();
       const ux=(b[0]-a[0])/L,uy=(b[1]-a[1])/L,d=nl-L,mv=j=>{r.pts[j]=[r2(r.pts[j][0]+ux*d),r2(r.pts[j][1]+uy*d)]};
       if(r.open){for(let j=i+1;j<n;j++)mv(j)}           // dessin en cours : on décale la suite
-      else{mv((i+1)%n);if(n>3)mv((i+2)%n)}               // forme fermée : le mur suivant glisse parallèlement
+      else{mv((i+1)%n);if(n>3)mv((i+2)%n);r.pts=cleanPts(r.pts)}   // forme fermée : le mur suivant glisse parallèlement
       persist();rebuild();return;
     }
-    if(mid&&!r.open){const i=+mid.dataset.m,a=r.pts[i],b=r.pts[(i+1)%n];
+    if(mid&&st.edit){const i=+mid.dataset.m,a=r.pts[i],b=r.pts[(i+1)%n];snapHist();
       r.pts.splice(i+1,0,[r2(snapv((a[0]+b[0])/2)),r2(snapv((a[1]+b[1])/2))]);st.sel=i+1;persist();rebuild();return}
     if(!r.open)return;
     if(vt&&vt.dataset.v==='0'&&n>=3){closeShape(r);st.hover=null;persist();rebuild();return}
     const p=nextPoint(e);
-    if(n>=3){const f=r.pts[0];if(Math.hypot(p[0]-f[0],p[1]-f[1])*st.k<16){closeShape(r);st.hover=null;persist();rebuild();return}}
+    if(n>=3){const f=r.pts[0];if(Math.hypot(p[0]-f[0],p[1]-f[1])*st.k<22){closeShape(r);st.hover=null;persist();rebuild();return}}
     const last=r.pts[n-1];if(last&&Math.hypot(p[0]-last[0],p[1]-last[1])<0.01)return;
     r.pts.push(p);st.hover=null;persist();rebuild();
   };
   // barre d'outils
   const q=s=>el.querySelector(s);
-  q('[data-tpl]').onchange=e=>{const k=e.target.value;if(!TEMPLATES[k])return;
+  const on=(sel,fn)=>{const b=q(sel);if(b)b.onclick=fn};
+  const tp=q('[data-tpl]');
+  if(tp)tp.onchange=e=>{const k=e.target.value;if(!TEMPLATES[k])return;
     if(!confirm('Remplacer le dessin par le modèle « '+TEMPLATES[k].label+' » ?')){e.target.value='';return}
-    r.pts=tplPts(k);r.open=false;st.sel=null;persist();rebuild()};
-  q('[data-ortho]').onchange=e=>{r.ortho=e.target.checked;persist()};
-  q('[data-new]').onclick=()=>{if(r.pts.length&&!confirm('Effacer le dessin et recommencer ?'))return;r.pts=[];r.open=true;st.sel=null;persist();rebuild()};
-  const u=q('[data-undo]');if(u)u.onclick=()=>{r.pts.pop();persist();rebuild()};
-  const f=q('[data-finish]');if(f)f.onclick=()=>{if(r.pts.length>=3){closeShape(r);persist();rebuild()}};
-  el.querySelectorAll('[data-full]').forEach(b=>b.onclick=()=>{
-    st.full=!st.full;document.body.classList.toggle('noscroll',st.full);rebuild();
+    snapHist();r.pts=tplPts(k);r.open=false;st.sel=null;persist();rebuild()};
+  const oc=q('[data-ortho]');if(oc)oc.onchange=e=>{r.ortho=e.target.checked;persist()};
+  on('[data-new]',()=>{if(r.pts.length&&!confirm('Effacer le dessin et recommencer ?'))return;r.pts=[];r.open=true;st.edit=false;st.sel=null;persist();rebuild()});
+  on('[data-undo]',()=>{r.pts.pop();persist();rebuild()});
+  on('[data-finish]',()=>{if(r.pts.length>=3){closeShape(r);persist();rebuild()}});
+  on('[data-editon]',()=>{
+    r.pts=cleanPts(r.pts);st.edit=true;st.sel=null;st.hist=[];
+    if(innerWidth<900&&!st.full){st.full=true;st.autoFull=true;document.body.classList.add('noscroll')}
+    persist();rebuild();
+  });
+  on('[data-editdone]',()=>{
+    st.edit=false;st.sel=null;r.pts=cleanPts(r.pts);
+    if(st.autoFull){st.full=false;st.autoFull=false;document.body.classList.remove('noscroll')}
+    persist();rebuild();toast('✓ Dessin enregistré');
     if(!st.full){const rm=$$('#rooms .room')[+el.dataset.i];rm&&rm.scrollIntoView({block:'start'});scrollBy(0,-70)}
   });
-  const dv=q('[data-delv]');if(dv)dv.onclick=()=>{if(st.sel!=null&&r.pts.length>3){r.pts.splice(st.sel,1);st.sel=null;persist();rebuild()}};
+  on('[data-hundo]',()=>{if(st.hist&&st.hist.length){r.pts=JSON.parse(st.hist.pop());st.sel=null;persist();rebuild()}});
+  el.querySelectorAll('[data-full]').forEach(b=>b.onclick=()=>{
+    st.full=!st.full;st.autoFull=false;document.body.classList.toggle('noscroll',st.full);rebuild();
+    if(!st.full){const rm=$$('#rooms .room')[+el.dataset.i];rm&&rm.scrollIntoView({block:'start'});scrollBy(0,-70)}
+  });
+  on('[data-delv]',()=>{if(st.sel!=null&&r.pts.length>3){snapHist();r.pts.splice(st.sel,1);r.pts=cleanPts(r.pts);st.sel=null;persist();rebuild()}});
 }
 const ROPEN={};                         // pièces ouvertes / repliées
 const isOpen=r=>ROPEN[r.id]??(cur.rooms.length<=2);
@@ -767,7 +817,7 @@ function addRoom(r){
 function renderRooms(){
   $('#rooms').innerHTML=cur.rooms.map((r,i)=>{
     const mur=r.type==='mur', poly=!mur&&r.shape==='poly', op=isOpen(r);
-    if(poly)ensurePts(r);
+    if(poly){ensurePts(r);if(!r.open)r.pts=cleanPts(r.pts)}
     return `<div class="room${op?' open':''}" data-i="${i}">
       <div class="rhead" data-toggle>
         <span class="tag">${mur?'MUR':poly?'DESSIN':'PLAFOND'}</span>
@@ -1003,7 +1053,7 @@ $('#import').onchange=async e=>{
 /* ===================== Hors ligne ===================== */
 function net(){const on=navigator.onLine;$('#net').textContent=on?'En ligne':'Hors ligne';$('#net').classList.toggle('off',!on)}
 addEventListener('online',net);addEventListener('offline',net);net();
-const APP_VERSION='v7';$('#ver').textContent=APP_VERSION;
+const APP_VERSION='v8';$('#ver').textContent=APP_VERSION;
 // Mise à jour automatique : dès qu'une nouvelle version est en ligne, l'app se recharge toute seule
 if('serviceWorker' in navigator){
   let reloaded=false;const hadSW=!!navigator.serviceWorker.controller;
