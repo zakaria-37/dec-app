@@ -87,6 +87,80 @@ tfoot td{font-weight:700}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;z-index:99;opacity:0;transition:.25s;pointer-events:none}
 .toast.on{opacity:1}
 
+/* ---------- Smartphone d'abord ---------- */
+input,select,textarea{font-size:16px}
+.btn{min-height:42px;justify-content:center}
+.btn.sm{min-height:36px}
+.room{padding:0;overflow:hidden}
+.rhead{display:flex;align-items:center;gap:10px;padding:12px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.rhead .rname{flex:1;min-width:0}
+.rhead .rname b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rhead .rname small{color:var(--muted);font-size:12px}
+.rhead .chev{font-size:18px;color:var(--muted);transition:transform .2s}
+.room.open .chev{transform:rotate(180deg)}
+.rbody{padding:0 12px 12px}
+.rtop{display:flex;gap:8px;margin-bottom:10px}
+.addbar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.addbar .btn{flex-direction:column;gap:2px;padding:10px 6px;font-size:13px;line-height:1.2;min-height:64px}
+.addbar .btn span{font-size:20px}
+.dirs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dircard{font:inherit;text-align:left;background:#fff;border:2px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;display:flex;flex-direction:column;gap:2px;color:var(--ink)}
+.dircard b{font-size:14px}
+.dircard span{font-size:12px;color:var(--muted)}
+.dircard em{font-style:normal;font-size:11px;color:var(--ok);font-weight:700}
+.dircard.on{border-color:var(--accent);background:#fdf6e9}
+.xcard{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;background:#fcfbf9}
+.xcard .xg{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px;margin-top:8px}
+.xcard .xf{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.totbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#fff;border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.07);display:flex;align-items:center;gap:12px;padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
+.totbar small{display:block;font-size:11px;color:var(--muted)}
+.totbar b{font-size:20px;color:var(--accent-d);white-space:nowrap}
+.totbar .btn{margin-left:auto}
+.draw.full{position:fixed;inset:0;z-index:60;background:#fff;overflow:auto;padding:10px 10px calc(10px + env(safe-area-inset-bottom))}
+.fullbar{display:none}
+.draw.full .fullbar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.draw.full .fullbar span{flex:1;font-size:12px;color:var(--muted)}
+.draw.full [data-fullon]{display:none}
+body.noscroll{overflow:hidden}
+.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:6px;margin-bottom:6px}
+.pbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.pbar input{flex:1;min-width:180px}
+.devbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+nav.tabs button i{font-style:normal}
+body.has-totbar main{padding-bottom:90px}
+@media (max-width:899px){
+  header.top{padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top))}
+  header.top .logo{width:32px;height:32px}
+  header.top h1{font-size:16px}
+  header.top small{font-size:11px}
+  nav.tabs{position:fixed;top:auto;bottom:0;left:0;right:0;z-index:30;border-top:1px solid var(--line);border-bottom:0;padding:4px 4px calc(4px + env(safe-area-inset-bottom));gap:0;box-shadow:0 -2px 10px rgba(0,0,0,.05)}
+  nav.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px;font-size:11px;border-radius:10px}
+  nav.tabs button i{font-size:20px;line-height:1.2}
+  nav.tabs button.on{background:#f3ede2;color:var(--ink);font-weight:700}
+  main{padding:10px 10px 90px}
+  body.has-totbar main{padding-bottom:160px}
+  .totbar{bottom:calc(58px + env(safe-area-inset-bottom));padding:8px 14px;border-radius:14px 14px 0 0}
+  .toast{bottom:150px}
+  .card{padding:12px}
+  .grid{grid-template-columns:1fr 1fr}
+  .res{grid-template-columns:1fr 1fr}
+  .devbar .btn{flex:1;padding:9px 6px}
+  .pbar .btn{width:100%}
+  .row .btn{flex:1}
+  table.stack thead{display:none}
+  table.stack tbody tr{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0;border-bottom:1px solid var(--line)}
+  table.stack tbody td{border:0;padding:0}
+  table.stack tbody td:nth-child(1){grid-column:1;grid-row:1;font-weight:600}
+  table.stack tbody td:nth-child(4){grid-column:2;grid-row:1;font-weight:700;text-align:right}
+  table.stack tbody td:nth-child(2){grid-column:1;grid-row:2;font-size:12px;color:var(--muted);text-align:left;font-weight:400}
+  table.stack tbody td:nth-child(3){grid-column:2;grid-row:2;font-size:12px;color:var(--muted);font-weight:400}
+  table.stack tbody td[colspan]{grid-column:1/-1}
+}
+@media (min-width:900px){
+  nav.tabs button i{margin-right:4px}
+  .totbar{max-width:1000px;margin:0 auto;border-radius:14px 14px 0 0}
+}
+
 /* ---------- Devis (document) ---------- */
 #devis-doc{background:#fff;padding:32px;border:1px solid var(--line);border-radius:var(--r);max-width:820px;margin:0 auto}
 .dv-head{display:flex;justify-content:space-between;gap:20px;border-bottom:3px solid var(--accent);padding-bottom:14px;margin-bottom:18px}
@@ -114,7 +188,7 @@ tfoot td{font-weight:700}
 }
 @media print{
   body{background:#fff}
-  header.top,nav.tabs,.noprint,.toast{display:none!important}
+  header.top,nav.tabs,.noprint,.toast,.totbar{display:none!important}
   main{padding:0;max-width:none}
   section{display:none!important}
   section#v-devis{display:block!important}
@@ -132,26 +206,25 @@ tfoot td{font-weight:700}
 </header>
 
 <nav class="tabs">
-  <button data-v="projets" class="on">📁 Projets</button>
-  <button data-v="edit">✏️ Projet</button>
-  <button data-v="devis">🧾 Devis</button>
-  <button data-v="params">⚙️ Paramètres &amp; prix</button>
+  <button data-v="projets" class="on"><i>📁</i>Projets</button>
+  <button data-v="edit"><i>📐</i>Projet</button>
+  <button data-v="devis"><i>🧾</i>Devis</button>
+  <button data-v="params"><i>⚙️</i>Réglages</button>
 </nav>
 
 <main>
 <!-- ================= PROJETS ================= -->
 <section id="v-projets">
-  <div class="row" style="margin-bottom:12px">
+  <div class="pbar">
     <button class="btn pri" id="new-project">＋ Nouveau projet</button>
-    <span class="sp"></span>
-    <input id="search" placeholder="Rechercher client / projet…" style="max-width:260px">
+    <input id="search" type="search" placeholder="🔍 Rechercher client / projet…">
   </div>
   <div class="card" style="padding:0"><div class="plist" id="plist"></div></div>
 </section>
 
 <!-- ================= EDIT ================= -->
 <section id="v-edit" class="hide">
-  <div id="noprice" class="alert hide">⚠️ Les prix unitaires ne sont pas encore définis. Allez dans <b>Paramètres &amp; prix</b> pour les saisir, sinon le devis sera à 0.</div>
+  <div id="noprice" class="alert hide">⚠️ Les prix unitaires ne sont pas encore définis. Allez dans <b>⚙️ Réglages</b> pour les saisir, sinon le devis sera à 0.</div>
 
   <div class="card">
     <h2>Client &amp; projet</h2>
@@ -166,21 +239,19 @@ tfoot td{font-weight:700}
   </div>
 
   <div class="card">
-    <div class="row" style="margin-bottom:10px"><h2 style="margin:0">Pièces &amp; murs</h2><span class="sp"></span>
-      <button class="btn sm" id="add-plafond">＋ Plafond rectangle</button>
-      <button class="btn sm pri" id="add-poly">✏️ Dessiner une pièce (L, T…)</button>
-      <button class="btn sm" id="add-mur">＋ Mur / cloison</button>
+    <h2>Pièces &amp; murs</h2>
+    <div class="addbar">
+      <button class="btn" id="add-plafond"><span>▭</span>Pièce rectangle</button>
+      <button class="btn pri" id="add-poly"><span>✏️</span>Dessiner une pièce</button>
+      <button class="btn" id="add-mur"><span>▯</span>Mur / cloison</button>
     </div>
     <div id="rooms"></div>
   </div>
 
   <div class="card">
     <h2>Autres éléments (corniche, spots, peinture, transport…)</h2>
-    <table>
-      <thead><tr><th>Désignation</th><th class="n">Qté</th><th>Unité</th><th class="n">Prix unitaire</th><th class="n">Total</th><th></th></tr></thead>
-      <tbody id="extras"></tbody>
-    </table>
-    <button class="btn sm" id="add-extra" style="margin-top:8px">＋ Ajouter une ligne</button>
+    <div id="extras"></div>
+    <button class="btn" id="add-extra" style="width:100%">＋ Ajouter un élément</button>
   </div>
 
   <div class="card">
@@ -204,11 +275,11 @@ tfoot td{font-weight:700}
 
 <!-- ================= DEVIS ================= -->
 <section id="v-devis" class="hide">
-  <div class="row noprint" style="margin-bottom:12px">
+  <div class="devbar noprint">
     <button class="btn" id="back-edit">← Modifier</button>
-    <span class="sp"></span>
-    <button class="btn" id="share-wa">WhatsApp</button>
-    <button class="btn pri" id="print">🖨 Imprimer / PDF</button>
+    <button class="btn" id="share">📤 Partager</button>
+    <button class="btn" id="share-wa">💬 WhatsApp</button>
+    <button class="btn pri" id="print">📄 PDF</button>
   </div>
   <div id="devis-doc"></div>
 </section>
@@ -276,6 +347,10 @@ tfoot td{font-weight:700}
 </section>
 </main>
 
+<div class="totbar hide" id="totbar">
+  <div><small>Total du devis</small><b id="tb-total">0</b><small id="tb-sub"></small></div>
+  <button class="btn pri" id="tb-devis">🧾 Voir le devis</button>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -465,6 +540,8 @@ function show(v){
   if(v==='edit')renderEdit();
   if(v==='devis')renderDevis();
   if(v==='params')renderParams();
+  document.body.classList.toggle('has-totbar',v==='edit');$('#totbar').classList.toggle('hide',v!=='edit');
+  document.body.classList.remove('noscroll');
   scrollTo(0,0);
 }
 $$('nav.tabs button').forEach(b=>b.onclick=()=>show(b.dataset.v));
@@ -513,21 +590,22 @@ const DRAW={};                         // état d'édition par pièce (sélectio
 const snapv=v=>Math.round(v/SNAP)*SNAP;
 function drawEditor(r){
   const st=DRAW[r.id]||{}, open=r.open, n=(r.pts||[]).length;
-  return `<div class="draw">
-    <div class="row" style="margin-bottom:6px">
-      <select data-tpl style="width:auto"><option value="">Modèle de forme…</option>${Object.entries(TEMPLATES).map(([k,t])=>`<option value="${k}">${t.label}</option>`).join('')}</select>
-      <label class="chk"><input type="checkbox" data-ortho${r.ortho!==false?' checked':''}> Angles droits (90°)</label>
-      <span class="sp"></span>
-      ${open?`<button class="btn sm" data-undo${n?'':' disabled'}>↶ Annuler le point</button>
+  return `<div class="draw${st.full?' full':''}">
+    <div class="fullbar"><b>${esc(r.name)||'Pièce'}</b><span data-mini></span><button class="btn sm pri" data-full>✓ Terminé</button></div>
+    <div class="tools">
+      <select data-tpl><option value="">📐 Modèle de forme…</option>${Object.entries(TEMPLATES).map(([k,t])=>`<option value="${k}">${t.label}</option>`).join('')}</select>
+      <label class="chk"><input type="checkbox" data-ortho${r.ortho!==false?' checked':''}> Angles droits</label>
+      <button class="btn sm" data-full data-fullon>⤢ Plein écran</button>
+      ${open?`<button class="btn sm" data-undo${n?'':' disabled'}>↶ Annuler</button>
               <button class="btn sm pri" data-finish${n>=3?'':' disabled'}>✓ Fermer la forme</button>`
-            :`<button class="btn sm del" data-delv${st.sel!=null&&n>3?'':' disabled'}>Supprimer le coin</button>`}
+            :`<button class="btn sm del" data-delv${st.sel!=null&&n>3?'':' disabled'}>✕ Supprimer le coin</button>`}
       <button class="btn sm" data-new>✏️ Nouveau dessin</button>
     </div>
     <div class="hint" style="margin:0 0 6px">${open
-      ?'<b>Dessin en cours :</b> touchez la grille pour placer chaque coin de la pièce, dans l\'ordre. Touchez le <b style="color:#15803d">premier point vert</b> (ou « Fermer la forme ») pour terminer. Touchez une cote pour taper la mesure exacte.'
-      :'Glissez un <b>coin</b> pour le déplacer · touchez une <b>cote</b> pour taper la mesure exacte · touchez <b>＋</b> au milieu d\'un mur pour ajouter un coin · touchez un coin pour le sélectionner.'}</div>
+      ?'<b>Dessin :</b> touchez la grille pour placer chaque coin, dans l\'ordre. Touchez le <b style="color:#15803d">point vert</b> pour fermer. Touchez une cote pour taper la mesure.'
+      :'Glissez un <b>coin</b> · touchez une <b>cote</b> pour taper la mesure · <b>＋</b> pour ajouter un coin.'}</div>
     <svg data-svg class="drawsvg${open?' open':''}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif"></svg>
-    <div class="legend"><span><i style="background:#b8893b"></i>Cornières (murs)</span><span><i style="background:#1f2a37"></i>Fourrures tous les ${fq(S.spacing*100)} cm</span><span><i style="background:#b91c1c;height:8px;width:8px;border-radius:50%"></i>Tiges tous les ${fq(S.tigeSpacing*100)} cm</span><span>Grille : 50 cm</span></div>
+    <div class="legend"><span><i style="background:#b8893b"></i>Cornières</span><span><i style="background:#1f2a37"></i>Fourrures ${fq(S.spacing*100)} cm</span><span><i style="background:#b91c1c;height:8px;width:8px;border-radius:50%"></i>Tiges ${fq(S.tigeSpacing*100)} cm</span><span>Grille 50 cm</span></div>
   </div>`;
 }
 function drawPoly(el,r,c){
@@ -536,13 +614,14 @@ function drawPoly(el,r,c){
   const pts=r.pts||[], n=pts.length, open=r.open;
   const fits=st.view&&open&&n&&pts.every(p=>p[0]>st.view.x+0.3&&p[0]<st.view.x+st.view.w-0.3&&p[1]>st.view.y+0.3&&p[1]<st.view.y+st.view.h-0.3);
   const PW=svg.clientWidth||700, M=46;   // marge en pixels pour les cotes
-  if(!st.drag&&(!fits||st.pw!==PW)){               // cadrage (figé pendant qu'on glisse / qu'on dessine)
+  const Hm=st.full?Math.max(innerHeight-190,300):Math.max(PW*0.85,380);
+  if(!st.drag&&(!fits||st.pw!==PW||st.hm!==Hm)){               // cadrage (figé pendant qu'on glisse / qu'on dessine)
     const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
     const x0=Math.min(...xs,open?0:Infinity),y0=Math.min(...ys,open?0:Infinity);
     const x1=Math.max(...xs,open?6:-Infinity),y1=Math.max(...ys,open?4:-Infinity);
     const iw=Math.max(x1-x0,1),ih=Math.max(y1-y0,1);
-    const k=Math.min((PW-2*M)/iw,(Math.max(PW*0.85,380)-2*M)/ih);
-    st.k=k;st.pw=PW;st.view={x:x0-M/k,y:y0-M/k,w:iw+2*M/k,h:ih+2*M/k};
+    const k=Math.min((PW-2*M)/iw,(Hm-2*M)/ih);
+    st.k=k;st.pw=PW;st.hm=Hm;st.view={x:x0-M/k,y:y0-M/k,w:iw+2*M/k,h:ih+2*M/k};
   }
   const v=st.view, k=st.k;
   const W=v.w*k,H=v.h*k,X=x=>(x-v.x)*k,Y=y=>(y-v.y)*k;
@@ -671,40 +750,59 @@ function attachDraw(el,r,rebuild,refresh){
   q('[data-new]').onclick=()=>{if(r.pts.length&&!confirm('Effacer le dessin et recommencer ?'))return;r.pts=[];r.open=true;st.sel=null;persist();rebuild()};
   const u=q('[data-undo]');if(u)u.onclick=()=>{r.pts.pop();persist();rebuild()};
   const f=q('[data-finish]');if(f)f.onclick=()=>{if(r.pts.length>=3){closeShape(r);persist();rebuild()}};
+  el.querySelectorAll('[data-full]').forEach(b=>b.onclick=()=>{
+    st.full=!st.full;document.body.classList.toggle('noscroll',st.full);rebuild();
+    if(!st.full){const rm=$$('#rooms .room')[+el.dataset.i];rm&&rm.scrollIntoView({block:'start'});scrollBy(0,-70)}
+  });
   const dv=q('[data-delv]');if(dv)dv.onclick=()=>{if(st.sel!=null&&r.pts.length>3){r.pts.splice(st.sel,1);st.sel=null;persist();rebuild()}};
+}
+const ROPEN={};                         // pièces ouvertes / repliées
+const isOpen=r=>ROPEN[r.id]??(cur.rooms.length<=2);
+function addRoom(r){
+  cur.rooms.forEach(x=>ROPEN[x.id]=false);ROPEN[r.id]=true;
+  cur.rooms.push(r);persist();renderRooms();renderSummary();
+  const els=$$('#rooms .room');const el=els[els.length-1];
+  if(el){el.scrollIntoView({block:'start'});scrollBy(0,-70)}
 }
 function renderRooms(){
   $('#rooms').innerHTML=cur.rooms.map((r,i)=>{
-    const mur=r.type==='mur', poly=!mur&&r.shape==='poly';
+    const mur=r.type==='mur', poly=!mur&&r.shape==='poly', op=isOpen(r);
     if(poly)ensurePts(r);
-    return `<div class="room" data-i="${i}">
-      <div class="head">
-        <span class="tag">${mur?'MUR':'PLAFOND'}</span>
-        <input data-r="name" value="${esc(r.name)}" placeholder="Nom (ex: Chambre 1, Salon)">
-        <button class="btn sm" data-act="dup" title="Dupliquer">⧉</button>
-        <button class="btn sm del" data-act="rm" title="Supprimer">✕</button>
+    return `<div class="room${op?' open':''}" data-i="${i}">
+      <div class="rhead" data-toggle>
+        <span class="tag">${mur?'MUR':poly?'DESSIN':'PLAFOND'}</span>
+        <div class="rname"><b data-title>${esc(r.name)||'Sans nom'}</b><small data-sum></small></div>
+        <span class="chev">▾</span>
       </div>
-      ${mur?'':`<div class="shape-sw"><span>Forme de la pièce :</span>
-        <button class="btn${poly?'':' on'}" data-shape="rect">▭ Rectangle</button>
-        <button class="btn${poly?' on':''}" data-shape="poly">✏️ Dessiner la pièce (L, T, U, biais…)</button></div>`}
-      <div class="grid">
-        ${poly?'':`<label>Longueur (m)<input data-r="L" type="number" step="0.01" inputmode="decimal" value="${esc(r.L)}"></label>
-        <label>${mur?'Hauteur (m)':'Largeur (m)'}<input data-r="W" type="number" step="0.01" inputmode="decimal" value="${esc(r.W)}"></label>`}
-        <label>${mur?'Ouvertures à déduire (m²)':'Surface à déduire (m²)'}<input data-r="deduct" type="number" step="0.01" inputmode="decimal" value="${esc(r.deduct)}"></label>
-        ${mur?'':`<label>Sens des fourrures<select data-r="dir"><option value="auto"${r.dir!=='L'&&r.dir!=='W'?' selected':''}>Automatique (le plus économique)</option><option value="L"${r.dir==='L'?' selected':''}>${poly?'Horizontal (→)':'Dans la longueur (toul)'}</option><option value="W"${r.dir==='W'?' selected':''}>${poly?'Vertical (↓)':'Dans la largeur (3ord)'}</option></select></label>`}
-        <label>Nombre identique<input data-r="count" type="number" min="1" step="1" value="${esc(r.count||1)}"></label>
+      <div class="rbody${op?'':' hide'}">
+        <div class="rtop">
+          <input data-r="name" value="${esc(r.name)}" placeholder="Nom (ex: Chambre 1, Salon)">
+          <button class="btn sm" data-act="dup" title="Dupliquer">⧉</button>
+          <button class="btn sm del" data-act="rm" title="Supprimer">🗑</button>
+        </div>
+        ${mur?'':`<div class="shape-sw">
+          <button class="btn${poly?'':' on'}" data-shape="rect">▭ Rectangle</button>
+          <button class="btn${poly?' on':''}" data-shape="poly">✏️ Dessin libre (L, T, U…)</button></div>`}
+        <div class="grid">
+          ${poly?'':`<label>Longueur (m)<input data-r="L" type="number" step="0.01" inputmode="decimal" value="${esc(r.L)}"></label>
+          <label>${mur?'Hauteur (m)':'Largeur (m)'}<input data-r="W" type="number" step="0.01" inputmode="decimal" value="${esc(r.W)}"></label>`}
+          <label>${mur?'Ouvertures (m²)':'À déduire (m²)'}<input data-r="deduct" type="number" step="0.01" inputmode="decimal" value="${esc(r.deduct)}" placeholder="0"></label>
+          <label>Nombre identique<input data-r="count" type="number" min="1" step="1" inputmode="numeric" value="${esc(r.count||1)}"></label>
+        </div>
+        ${poly?drawEditor(r):''}
+        <div class="res" data-res></div>
+        ${mur?'':`<div data-cmp style="margin-top:10px"></div>${poly?'':'<div class="plan" data-plan></div>'}`}
       </div>
-      ${poly?drawEditor(r):''}
-      <div class="res" data-res></div>
-      ${mur?'':`<div data-cmp style="margin-top:10px"></div>${poly?'':'<div class="plan" data-plan></div>'}`}
-    </div>`}).join('') || '<div class="empty">Ajoutez une pièce (plafond) ou un mur.</div>';
+    </div>`}).join('') || '<div class="empty">Ajoutez une pièce avec les boutons ci-dessus.</div>';
   $$('#rooms .room').forEach(el=>{
     const r=cur.rooms[+el.dataset.i];
     const refresh=()=>{persist();updRoom(el,r);renderSummary()};
     const rebuild=()=>{persist();renderRooms();renderSummary()};
+    el.querySelector('[data-toggle]').onclick=()=>{
+      const op=!isOpen(r);ROPEN[r.id]=op;el.classList.toggle('open',op);el.querySelector('.rbody').classList.toggle('hide',!op);if(op)updRoom(el,r)};
     el.querySelectorAll('[data-r]').forEach(inp=>inp.oninput=inp.onchange=()=>{r[inp.dataset.r]=inp.value;refresh()});
     el.querySelector('[data-act=rm]').onclick=()=>{if(confirm('Supprimer « '+(r.name||'cet élément')+' » ?')){cur.rooms.splice(+el.dataset.i,1);rebuild()}};
-    el.querySelector('[data-act=dup]').onclick=()=>{const c=structuredClone(r);c.id=uid();c.name=r.name+' (copie)';cur.rooms.splice(+el.dataset.i+1,0,c);rebuild()};
+    el.querySelector('[data-act=dup]').onclick=()=>{const c=structuredClone(r);c.id=uid();c.name=r.name+' (copie)';ROPEN[c.id]=false;cur.rooms.splice(+el.dataset.i+1,0,c);rebuild();toast('Pièce dupliquée')};
     el.querySelectorAll('[data-shape]').forEach(b=>b.onclick=()=>{
       r.shape=b.dataset.shape;
       if(r.shape==='poly'&&!(r.pts&&r.pts.length)){
@@ -725,16 +823,23 @@ function updRoom(el,r){
     (mur? box(q.rail,'rails')+box(q.montant,'montants ('+c.lines+' lignes)')
         : box(q.corniere,'cornières')+box(q.fourrure,'barres de fourrure ('+c.lines*c.mult+' lignes)')+box(q.tige,'tiges'))+
     box(q.cheville,'chevilles');
+  const sum=el.querySelector('[data-sum]');
+  if(sum)sum.textContent=c.area?`${fq(c.area)} m² · ${fq(q.plaque)} plaques${mur?'':' · '+q.tige+' tiges'}`:(poly&&r.open?'Dessin en cours…':'À compléter');
+  const ti=el.querySelector('[data-title]');if(ti)ti.textContent=r.name||'Sans nom';
+  const mini=el.querySelector('[data-mini]');if(mini)mini.textContent=c.area?`${fq(c.area)} m² · ${fq(q.plaque)} plaques · ${q.tige} tiges`:'';
+  if(el.querySelector('.rbody.hide'))return;           // pièce repliée : pas besoin de dessiner
   if(poly)drawPoly(el,r,c);
   const pl=el.querySelector('[data-plan]');
   if(pl)pl.innerHTML=planSVG(r,c);
   const cmp=el.querySelector('[data-cmp]');
   if(cmp){
     if(!c.opts){cmp.innerHTML='';return}
-    const row=(k,t)=>{const o=c.opts[k];return `<tr class="${c.dir===k?'on':''}"><td>${t} — ligne la plus longue ${fq(o.maxLen)} m${c.best===k?' <span class="tag ok">le plus économique</span>':''}</td>
-      <td class="n">${o.lines*c.mult}</td><td class="n">${fq(o.total*c.mult)} m</td><td class="n">${o.bars*c.mult}</td><td class="n">${o.tiges*c.mult}</td></tr>`};
-    cmp.innerHTML=`<table class="cmp"><thead><tr><th>Sens des fourrures</th><th class="n">Lignes</th><th class="n">Métrage</th><th class="n">Barres</th><th class="n">Tiges</th></tr></thead>
-      <tbody>${row('L',poly?'Horizontal (→)':'Dans la longueur (toul)')}${row('W',poly?'Vertical (↓)':'Dans la largeur (3ord)')}</tbody></table>`;
+    const auto=r.dir!=='L'&&r.dir!=='W';
+    const card=(k,t)=>{const o=c.opts[k];return `<button class="dircard${c.dir===k?' on':''}" data-dir="${k}"><b>${t}</b>
+      <span>${o.bars*c.mult} barres · ${o.tiges*c.mult} tiges</span><span>${o.lines*c.mult} lignes · ${fq(o.total*c.mult)} m</span>${c.best===k?'<em>✓ le plus économique</em>':''}</button>`};
+    cmp.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:6px">Sens des fourrures — ${auto?'choisi automatiquement (touchez pour changer)':'<b>choisi à la main</b> · <a href="#" data-dir="auto">revenir en automatique</a>'}</div>
+      <div class="dirs">${card('L',poly?'→ Horizontal':'→ Longueur (toul)')}${card('W',poly?'↓ Vertical':'↓ Largeur (3ord)')}</div>`;
+    cmp.querySelectorAll('[data-dir]').forEach(b=>b.onclick=e=>{e.preventDefault();r.dir=b.dataset.dir;persist();updRoom(el,r);renderSummary()});
   }
 }
 function planSVG(r,c){
@@ -761,31 +866,33 @@ function planSVG(r,c){
   s+='</svg>';
   return s+`<div class="legend"><span><i style="background:#b8893b"></i>Cornières (murs)</span><span><i style="background:#1f2a37"></i>Fourrures tous les ${fq(sp*100)} cm</span><span><i style="background:#b91c1c;height:8px;width:8px;border-radius:50%"></i>Tiges tous les ${fq(tsp*100)} cm</span></div>`;
 }
-$('#add-plafond').onclick=()=>{cur.rooms.push(newRoom('plafond'));persist();renderRooms();renderSummary()};
-$('#add-poly').onclick=()=>{const r=newRoom('plafond');r.shape='poly';r.pts=[];r.open=true;cur.rooms.push(r);persist();renderRooms();renderSummary();
-  const els=$$('#rooms .room');els[els.length-1].scrollIntoView({behavior:'smooth'})};
-$('#add-mur').onclick=()=>{cur.rooms.push(newRoom('mur'));persist();renderRooms();renderSummary()};
+$('#add-plafond').onclick=()=>addRoom(newRoom('plafond'));
+$('#add-poly').onclick=()=>{const r=newRoom('plafond');r.shape='poly';r.pts=[];r.open=true;r.name='Pièce';addRoom(r)};
+$('#add-mur').onclick=()=>addRoom(newRoom('mur'));
 
 function renderExtras(){
   cur.extras=cur.extras||[];
-  $('#extras').innerHTML=cur.extras.map((e,i)=>`<tr data-i="${i}">
-    <td><input data-e="label" value="${esc(e.label)}" placeholder="Ex: Corniche plâtre"></td>
-    <td><input data-e="qty" type="number" step="0.01" value="${esc(e.qty)}" style="width:80px;text-align:right"></td>
-    <td><input data-e="unit" value="${esc(e.unit)}" placeholder="u, m, m²" style="width:70px"></td>
-    <td><input data-e="pu" type="number" step="0.01" value="${esc(e.pu)}" style="width:110px;text-align:right"></td>
-    <td class="n" data-t>${fm(num(e.qty)*num(e.pu))}</td>
-    <td><button class="btn sm del">✕</button></td></tr>`).join('');
-  $$('#extras tr').forEach(tr=>{
+  $('#extras').innerHTML=cur.extras.map((e,i)=>`<div class="xcard" data-i="${i}">
+    <input data-e="label" value="${esc(e.label)}" placeholder="Désignation (ex: Corniche plâtre)">
+    <div class="xg">
+      <label>Quantité<input data-e="qty" type="number" step="0.01" inputmode="decimal" value="${esc(e.qty)}"></label>
+      <label>Unité<input data-e="unit" value="${esc(e.unit)}" placeholder="u, m, m²"></label>
+      <label>Prix unitaire<input data-e="pu" type="number" step="0.01" inputmode="decimal" value="${esc(e.pu)}"></label>
+    </div>
+    <div class="xf"><b data-t>${fm(num(e.qty)*num(e.pu))}</b><button class="btn sm del">🗑 Retirer</button></div>
+  </div>`).join('');
+  $$('#extras .xcard').forEach(tr=>{
     const e=cur.extras[+tr.dataset.i];
     tr.querySelectorAll('[data-e]').forEach(i=>i.oninput=()=>{e[i.dataset.e]=i.value;persist();tr.querySelector('[data-t]').textContent=fm(num(e.qty)*num(e.pu));renderSummary()});
     tr.querySelector('.del').onclick=()=>{cur.extras.splice(+tr.dataset.i,1);persist();renderExtras();renderSummary()};
   });
 }
-$('#add-extra').onclick=()=>{cur.extras.push({label:'',qty:1,unit:'u',pu:''});persist();renderExtras()};
+$('#add-extra').onclick=()=>{cur.extras.push({label:'',qty:1,unit:'u',pu:''});persist();renderExtras();const ins=$$('#extras [data-e=label]');ins[ins.length-1]?.focus()};
 
 function renderSummary(){
   const t=calcProject(cur);
-  $('#summary').innerHTML=`<table>
+  $('#tb-total').textContent=fm(t.ttc);$('#tb-sub').textContent=`${fq(t.area)} m² · ${fq(t.q.plaque)} plaques`;
+  $('#summary').innerHTML=`<table class="stack">
     <thead><tr><th>Élément</th><th class="n">Quantité</th><th class="n">P.U.</th><th class="n">Total</th></tr></thead>
     <tbody>
     ${t.mat.map(m=>`<tr><td>${m.label}</td><td class="n">${fq(m.qty)} ${m.unit}${m.qty>1?'s':''}</td><td class="n">${fm(m.pu)}</td><td class="n">${fm(m.tot)}</td></tr>`).join('')||'<tr><td colspan="4" class="hint">Aucun matériau — saisissez les dimensions.</td></tr>'}
@@ -800,6 +907,7 @@ function renderSummary(){
     </tfoot></table>`;
 }
 $('#to-devis').onclick=()=>show('devis');
+$('#tb-devis').onclick=()=>show('devis');
 $('#back-edit').onclick=()=>show('edit');
 $('#del').onclick=()=>{if(confirm('Supprimer définitivement ce projet ?')){P=P.filter(p=>p.id!==cur.id);saveP();cur=null;show('projets');toast('Projet supprimé')}};
 $('#dup').onclick=()=>{const c=structuredClone(cur);c.id=uid();c.no=nextNo();c.title=(c.title||'Projet')+' (copie)';c.status='Brouillon';c.updated=Date.now();P.push(c);saveP();cur=c;renderEdit();toast('Projet dupliqué')};
@@ -829,12 +937,12 @@ function renderDevis(){
       <div><h4>Chantier</h4><b>${esc(p.title||'—')}</b><br>${esc(p.address)}</div>
     </div>
     <h3>Pièces / surfaces</h3>
-    <table><thead><tr><th>Désignation</th><th>Type</th><th class="n">Dimensions</th><th class="n">Surface</th></tr></thead><tbody>
+    <table class="stack"><thead><tr><th>Désignation</th><th>Type</th><th class="n">Dimensions</th><th class="n">Surface</th></tr></thead><tbody>
     ${t.rooms.filter(x=>x.c.area).map(({r,c})=>`<tr><td>${esc(r.name)}${c.mult>1?' × '+c.mult:''}</td><td>${r.type==='mur'?'Mur / cloison':'Faux plafond'}</td>
       <td class="n">${r.shape==='poly'&&r.type!=='mur'?'Forme libre, '+c.geom.edges.length+' murs':fq(num(r.L))+' × '+fq(num(r.W))+' m'}${num(r.deduct)?' − '+fq(num(r.deduct))+' m²':''}</td><td class="n">${fq(c.area)} m²</td></tr>`).join('')}
     </tbody><tfoot><tr><td colspan="3">Surface totale</td><td class="n">${fq(t.area)} m²</td></tr></tfoot></table>
     <h3>Détail</h3>
-    <table><thead><tr><th>Désignation</th><th class="n">Quantité</th><th class="n">P.U.</th><th class="n">Montant</th></tr></thead><tbody>
+    <table class="stack"><thead><tr><th>Désignation</th><th class="n">Quantité</th><th class="n">P.U.</th><th class="n">Montant</th></tr></thead><tbody>
     ${lines.map(l=>`<tr><td>${l[0]}</td><td class="n">${l[1]}</td><td class="n">${fm(l[2])}</td><td class="n">${fm(l[3])}</td></tr>`).join('')}
     </tbody></table>
     <table class="dv-tot">
@@ -847,6 +955,17 @@ function renderDevis(){
     <div class="dv-foot"><div>Signature ${esc(co.name)}<div class="dv-sign"></div></div><div>Bon pour accord — signature client<div class="dv-sign"></div></div></div>`;
 }
 $('#print').onclick=()=>{const t=document.title;document.title=`Devis ${cur.no} ${cur.client||''}`.trim();print();document.title=t};
+function devisText(){
+  const t=calcProject(cur);
+  return `${S.company.name} — Devis ${cur.no}\nClient : ${cur.client||'-'}\nProjet : ${cur.title||'-'}\n`+
+    t.rooms.filter(x=>x.c.area).map(({r,c})=>`• ${r.name} : ${fq(c.area)} m²`).join('\n')+
+    `\nSurface totale : ${fq(t.area)} m²\nTOTAL : ${fm(t.ttc)}\nValable ${S.validity} jours.`+(S.company.phone?`\nTél : ${S.company.phone}`:'');
+}
+$('#share').onclick=async()=>{
+  const txt=devisText();
+  if(navigator.share){try{await navigator.share({title:'Devis '+cur.no,text:txt})}catch(e){}}
+  else{try{await navigator.clipboard.writeText(txt);toast('Devis copié — collez-le où vous voulez')}catch(e){alert(txt)}}
+};
 $('#share-wa').onclick=()=>{
   const t=calcProject(cur);
   const msg=`*${S.company.name}* — Devis ${cur.no}\nClient : ${cur.client||'-'}\nProjet : ${cur.title||'-'}\nSurface : ${fq(t.area)} m²\n*Total : ${fm(t.ttc)}*\n\nValable ${S.validity} jours.`;
@@ -884,7 +1003,7 @@ $('#import').onchange=async e=>{
 /* ===================== Hors ligne ===================== */
 function net(){const on=navigator.onLine;$('#net').textContent=on?'En ligne':'Hors ligne';$('#net').classList.toggle('off',!on)}
 addEventListener('online',net);addEventListener('offline',net);net();
-const APP_VERSION='v6';$('#ver').textContent=APP_VERSION;
+const APP_VERSION='v7';$('#ver').textContent=APP_VERSION;
 // Mise à jour automatique : dès qu'une nouvelle version est en ligne, l'app se recharge toute seule
 if('serviceWorker' in navigator){
   let reloaded=false;const hadSW=!!navigator.serviceWorker.controller;
