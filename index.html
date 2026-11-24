@@ -77,6 +77,13 @@ tfoot td{font-weight:700}
 .walls select{width:auto}
 .shape-sw{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:13px;color:var(--muted)}
 .shape-sw .btn.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.drawsvg{width:100%;display:block;background:#fff;border:1px solid var(--line);border-radius:8px;user-select:none;-webkit-user-select:none}
+.drawsvg.open{touch-action:none;cursor:crosshair}
+.drawsvg .vtx{cursor:grab;touch-action:none}
+.drawsvg .elabel,.drawsvg .mid{cursor:pointer}
+.chk{flex-direction:row;align-items:center;gap:6px;font-size:13px;color:var(--ink)}
+.chk input{width:auto}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;z-index:99;opacity:0;transition:.25s;pointer-events:none}
 .toast.on{opacity:1}
 
@@ -161,7 +168,7 @@ tfoot td{font-weight:700}
   <div class="card">
     <div class="row" style="margin-bottom:10px"><h2 style="margin:0">Pièces &amp; murs</h2><span class="sp"></span>
       <button class="btn sm" id="add-plafond">＋ Plafond rectangle</button>
-      <button class="btn sm pri" id="add-poly">＋ Pièce forme libre (L, T…)</button>
+      <button class="btn sm pri" id="add-poly">✏️ Dessiner une pièce (L, T…)</button>
       <button class="btn sm" id="add-mur">＋ Mur / cloison</button>
     </div>
     <div id="rooms"></div>
@@ -328,13 +335,20 @@ function wallPoints(walls){
   (walls||[]).forEach(w=>{const l=num(w.len),a=num(w.ang)*Math.PI/180;if(l>0){x+=l*Math.cos(a);y+=l*Math.sin(a);pts.push([x,y])}});
   return pts;
 }
+// Points du dessin (en mètres). Anciennes pièces saisies « mur par mur » → converties en points.
+function tplPts(k){const p=wallPoints(TEMPLATES[k].walls.map(([len,ang])=>({len,ang})));p.pop();return p.map(([x,y])=>[r2(x),r2(y)])}
+function ensurePts(r){
+  if(Array.isArray(r.pts))return;
+  if(r.walls&&r.walls.length){const p=wallPoints(r.walls),l=p[p.length-1];if(p.length>3&&Math.hypot(l[0],l[1])<0.005)p.pop();r.pts=p.map(([x,y])=>[r2(x),r2(y)])}
+  else r.pts=tplPts('L');
+  r.open=false;
+}
 function roomGeom(r){
   let pts,gap=0;
   if(r.shape==='poly'){
-    pts=wallPoints(r.walls);
-    if(pts.length<3)return null;
-    const [lx,ly]=pts[pts.length-1];gap=Math.hypot(lx,ly);
-    if(gap<0.005)pts.pop();                 // le dernier mur revient au départ : tracé fermé
+    ensurePts(r);
+    if(r.open||r.pts.length<3)return null;  // dessin pas encore fermé
+    pts=r.pts.map(p=>[num(p[0]),num(p[1])]);
   }else{
     const L=num(r.L),W=num(r.W);if(!(L>0&&W>0))return null;
     pts=[[0,0],[L,0],[L,W],[0,W]];
@@ -345,7 +359,7 @@ function roomGeom(r){
   let a2=0,per=0;const edges=[];
   for(let i=0;i<pts.length;i++){const p=pts[i],q=pts[(i+1)%pts.length];a2+=p[0]*q[1]-q[0]*p[1];const l=Math.hypot(q[0]-p[0],q[1]-p[1]);per+=l;edges.push(l)}
   const area=Math.abs(a2)/2;if(area<0.01)return null;
-  return {pts,edges,area,perim:per,gap,sign:Math.sign(a2),w:Math.max(...pts.map(p=>p[0])),h:Math.max(...pts.map(p=>p[1]))};
+  return {pts,edges,area,perim:per,gap,ox:mx,oy:my,sign:Math.sign(a2),w:Math.max(...pts.map(p=>p[0])),h:Math.max(...pts.map(p=>p[1]))};
 }
 // Découpe des barres de 3 m : chaque morceau > 3 m = barres entières + reste ; les restes sont
 // rangés dans les chutes (plus grand d'abord).
@@ -493,31 +507,176 @@ function renderEdit(){
   $$('[data-p]').forEach(i=>{i.value=cur[i.dataset.p]??'';i.oninput=()=>{cur[i.dataset.p]=i.value;persist();renderSummary()}});
   renderRooms();renderExtras();renderSummary();
 }
-function dirOptions(ang,custom){
-  const a=((num(ang)%360)+360)%360, known=!custom&&DIRS.some(d=>d[0]===a);
-  return DIRS.map(([v,t])=>`<option value="${v}"${known&&a===v?' selected':''}>${t}</option>`).join('')+`<option value="x"${known?'':' selected'}>Angle libre…</option>`;
-}
-function wallsEditor(r){
-  const ws=r.walls||[];
-  return `<div class="walls">
-    <div class="row" style="margin-bottom:6px"><b style="font-size:14px">Murs de la pièce</b><span class="sp"></span>
-      <select data-tpl style="width:auto"><option value="">Modèle de forme…</option>${Object.entries(TEMPLATES).map(([k,t])=>`<option value="${k}">${t.label}</option>`).join('')}</select></div>
-    <p class="hint" style="margin:0 0 8px">Faites le tour de la pièce en partant d'un coin : pour chaque mur, sa longueur et la direction dans laquelle vous avancez. Le dessin se met à jour en direct.</p>
-    <table><thead><tr><th>#</th><th>Longueur (m)</th><th>Direction</th><th></th></tr></thead><tbody>
-    ${ws.map((w,i)=>{const a=((num(w.ang)%360)+360)%360,custom=w.custom||!DIRS.some(d=>d[0]===a);
-      return `<tr data-w="${i}"><td><b>${i+1}</b></td>
-      <td><input data-wf="len" type="number" step="0.01" inputmode="decimal" value="${esc(w.len)}" style="width:90px"></td>
-      <td><div class="row" style="flex-wrap:nowrap"><select data-wf="dir">${dirOptions(w.ang,w.custom)}</select>
-        ${custom?`<input data-wf="ang" type="number" step="0.1" value="${esc(w.ang)}" style="width:80px" title="Angle en degrés (0 = droite, 90 = bas)">°`:''}</div></td>
-      <td><button class="btn sm del" data-wdel>✕</button></td></tr>`}).join('')}
-    </tbody></table>
-    <div class="row" style="margin-top:8px"><button class="btn sm" data-wadd>＋ Ajouter un mur</button><button class="btn sm" data-wclose>⟲ Fermer automatiquement</button></div>
-    <div data-close style="margin-top:8px;font-size:13px"></div>
+/* ---------- Dessin de la pièce (forme libre) ---------- */
+const SNAP=0.05;                       // aimantation : 5 cm
+const DRAW={};                         // état d'édition par pièce (sélection, vue, glisser)
+const snapv=v=>Math.round(v/SNAP)*SNAP;
+function drawEditor(r){
+  const st=DRAW[r.id]||{}, open=r.open, n=(r.pts||[]).length;
+  return `<div class="draw">
+    <div class="row" style="margin-bottom:6px">
+      <select data-tpl style="width:auto"><option value="">Modèle de forme…</option>${Object.entries(TEMPLATES).map(([k,t])=>`<option value="${k}">${t.label}</option>`).join('')}</select>
+      <label class="chk"><input type="checkbox" data-ortho${r.ortho!==false?' checked':''}> Angles droits (90°)</label>
+      <span class="sp"></span>
+      ${open?`<button class="btn sm" data-undo${n?'':' disabled'}>↶ Annuler le point</button>
+              <button class="btn sm pri" data-finish${n>=3?'':' disabled'}>✓ Fermer la forme</button>`
+            :`<button class="btn sm del" data-delv${st.sel!=null&&n>3?'':' disabled'}>Supprimer le coin</button>`}
+      <button class="btn sm" data-new>✏️ Nouveau dessin</button>
+    </div>
+    <div class="hint" style="margin:0 0 6px">${open
+      ?'<b>Dessin en cours :</b> touchez la grille pour placer chaque coin de la pièce, dans l\'ordre. Touchez le <b style="color:#15803d">premier point vert</b> (ou « Fermer la forme ») pour terminer. Touchez une cote pour taper la mesure exacte.'
+      :'Glissez un <b>coin</b> pour le déplacer · touchez une <b>cote</b> pour taper la mesure exacte · touchez <b>＋</b> au milieu d\'un mur pour ajouter un coin · touchez un coin pour le sélectionner.'}</div>
+    <svg data-svg class="drawsvg${open?' open':''}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif"></svg>
+    <div class="legend"><span><i style="background:#b8893b"></i>Cornières (murs)</span><span><i style="background:#1f2a37"></i>Fourrures tous les ${fq(S.spacing*100)} cm</span><span><i style="background:#b91c1c;height:8px;width:8px;border-radius:50%"></i>Tiges tous les ${fq(S.tigeSpacing*100)} cm</span><span>Grille : 50 cm</span></div>
   </div>`;
+}
+function drawPoly(el,r,c){
+  const svg=el.querySelector('[data-svg]');if(!svg)return;
+  const st=DRAW[r.id]=DRAW[r.id]||{};
+  const pts=r.pts||[], n=pts.length, open=r.open;
+  const fits=st.view&&open&&n&&pts.every(p=>p[0]>st.view.x+0.3&&p[0]<st.view.x+st.view.w-0.3&&p[1]>st.view.y+0.3&&p[1]<st.view.y+st.view.h-0.3);
+  const PW=svg.clientWidth||700, M=46;   // marge en pixels pour les cotes
+  if(!st.drag&&(!fits||st.pw!==PW)){               // cadrage (figé pendant qu'on glisse / qu'on dessine)
+    const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
+    const x0=Math.min(...xs,open?0:Infinity),y0=Math.min(...ys,open?0:Infinity);
+    const x1=Math.max(...xs,open?6:-Infinity),y1=Math.max(...ys,open?4:-Infinity);
+    const iw=Math.max(x1-x0,1),ih=Math.max(y1-y0,1);
+    const k=Math.min((PW-2*M)/iw,(Math.max(PW*0.85,380)-2*M)/ih);
+    st.k=k;st.pw=PW;st.view={x:x0-M/k,y:y0-M/k,w:iw+2*M/k,h:ih+2*M/k};
+  }
+  const v=st.view, k=st.k;
+  const W=v.w*k,H=v.h*k,X=x=>(x-v.x)*k,Y=y=>(y-v.y)*k;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.style.height=H+'px';
+  let s='';
+  // grille 50 cm (traits forts tous les mètres)
+  for(let x=Math.ceil(v.x*2)/2;x<=v.x+v.w;x+=0.5){const m=Math.abs(x-Math.round(x))<1e-6;s+=`<line x1="${X(x)}" y1="0" x2="${X(x)}" y2="${H}" stroke="${m?'#e2ddd3':'#f1eee8'}"/>`}
+  for(let y=Math.ceil(v.y*2)/2;y<=v.y+v.h;y+=0.5){const m=Math.abs(y-Math.round(y))<1e-6;s+=`<line x1="0" y1="${Y(y)}" x2="${W}" y2="${Y(y)}" stroke="${m?'#e2ddd3':'#f1eee8'}"/>`}
+  const g=c&&c.geom;
+  if(!open&&n>=3){
+    s+=`<polygon points="${pts.map(p=>X(p[0])+','+Y(p[1])).join(' ')}" fill="#faf7f1"/>`;
+    if(g&&c.opts){                                   // fourrures + tiges sur la forme réelle
+      const lay=c.opts[c.dir],ox=g.ox,oy=g.oy;
+      lay.segs.forEach(sg=>{
+        const A=lay.horiz?[sg.x1,sg.y]:[sg.y,sg.x1],B=lay.horiz?[sg.x2,sg.y]:[sg.y,sg.x2];
+        s+=`<line x1="${X(A[0]+ox)}" y1="${Y(A[1]+oy)}" x2="${X(B[0]+ox)}" y2="${Y(B[1]+oy)}" stroke="#1f2a37" stroke-width="2"/>`;
+        sg.t.forEach(t=>{const P=lay.horiz?[t,sg.y]:[sg.y,t];s+=`<circle cx="${X(P[0]+ox)}" cy="${Y(P[1]+oy)}" r="3" fill="#b91c1c"/>`});
+      });
+    }
+  }
+  // murs + cotes
+  const ne=open?n-1:n;
+  const sign=(()=>{let a=0;for(let i=0;i<n;i++){const p=pts[i],q=pts[(i+1)%n];a+=p[0]*q[1]-q[0]*p[1]}return a>=0?1:-1})();
+  for(let i=0;i<ne;i++){
+    const p=pts[i],q=pts[(i+1)%n];
+    s+=`<line x1="${X(p[0])}" y1="${Y(p[1])}" x2="${X(q[0])}" y2="${Y(q[1])}" stroke="#b8893b" stroke-width="5" stroke-linecap="round"/>`;
+  }
+  for(let i=0;i<ne;i++){
+    const p=pts[i],q=pts[(i+1)%n],dx=q[0]-p[0],dy=q[1]-p[1],l=Math.hypot(dx,dy);if(l<0.01)continue;
+    const nx=(sign>0?dy:-dy)/l,ny=(sign>0?-dx:dx)/l, mx=X((p[0]+q[0])/2),my=Y((p[1]+q[1])/2);
+    const txt=fq(l)+' m', tw=txt.length*7.4+12, off=27;      // cote écrite le long du mur
+    const lx=mx+nx*off,ly=my+ny*off;
+    let ang=Math.atan2(dy,dx)*180/Math.PI;if(ang>90)ang-=180;if(ang<-90)ang+=180;
+    s+=`<g class="elabel" data-e="${i}" transform="translate(${lx} ${ly}) rotate(${ang})"><rect x="${-tw/2}" y="-11" width="${tw}" height="22" rx="11" fill="#fff" stroke="#b8893b"/>
+        <text x="0" y="5" text-anchor="middle" font-size="13" font-weight="700" fill="#1f2a37">${txt}</text></g>`;
+    if(!open)s+=`<g class="mid" data-m="${i}"><circle cx="${mx}" cy="${my}" r="9" fill="#fff" stroke="#94692a" stroke-width="1.5"/><text x="${mx}" y="${my+4.5}" text-anchor="middle" font-size="14" fill="#94692a">+</text></g>`;
+  }
+  // trait élastique pendant le dessin
+  if(open&&n&&st.hover){
+    const p=pts[n-1],q=st.hover,l=Math.hypot(q[0]-p[0],q[1]-p[1]);
+    s+=`<line x1="${X(p[0])}" y1="${Y(p[1])}" x2="${X(q[0])}" y2="${Y(q[1])}" stroke="#b8893b" stroke-width="3" stroke-dasharray="6 5"/>`;
+    s+=`<text x="${X(q[0])+12}" y="${Y(q[1])-10}" font-size="13" font-weight="700" fill="#94692a" paint-order="stroke" stroke="#fff" stroke-width="4">${fq(l)} m</text>`;
+  }
+  // coins
+  pts.forEach((p,i)=>{
+    const first=open&&i===0&&n>=3, sel=!open&&st.sel===i;
+    s+=`<circle data-v="${i}" class="vtx" cx="${X(p[0])}" cy="${Y(p[1])}" r="${first?13:10}" fill="${first?'#15803d':sel?'#b8893b':'#fff'}" stroke="${first?'#fff':'#94692a'}" stroke-width="3"/>`;
+  });
+  if(n)s+=`<text x="${X(pts[0][0])-14}" y="${Y(pts[0][1])-14}" text-anchor="end" font-size="11" fill="#94692a">départ</text>`;
+  if(!n)s+=`<text x="${W/2}" y="${H/2}" text-anchor="middle" font-size="15" fill="#6b7280">Touchez la grille pour placer le premier coin</text>`;
+  svg.innerHTML=s;
+}
+// Fermer la forme ; avec « angles droits », le dernier mur est redressé sur le premier point
+function closeShape(r){
+  const n=r.pts.length;if(n<3)return;
+  if(r.ortho!==false){const f=r.pts[0],l=r.pts[n-1];
+    if(Math.abs(l[0]-f[0])<Math.abs(l[1]-f[1]))l[0]=f[0];else l[1]=f[1];
+    if(n>3&&Math.hypot(l[0]-f[0],l[1]-f[1])<0.01)r.pts.pop();}
+  r.open=false;
+}
+function attachDraw(el,r,rebuild,refresh){
+  const svg=el.querySelector('[data-svg]');if(!svg)return;
+  const st=DRAW[r.id]=DRAW[r.id]||{};
+  const ortho=()=>r.ortho!==false;
+  const world=e=>{const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const q=p.matrixTransform(svg.getScreenCTM().inverse());return [st.view.x+q.x/st.k,st.view.y+q.y/st.k]};
+  const nextPoint=e=>{
+    let p=world(e).map(snapv);const last=r.pts[r.pts.length-1];
+    if(ortho()&&last){if(Math.abs(p[0]-last[0])>=Math.abs(p[1]-last[1]))p[1]=last[1];else p[0]=last[0]}
+    return p.map(r2);
+  };
+  svg.onpointerdown=e=>{
+    const t=e.target.closest('[data-v]');
+    if(t&&!r.open){
+      const i=+t.dataset.v;st.drag={i,orig:r.pts.map(p=>[...p]),moved:false};
+      svg.setPointerCapture(e.pointerId);e.preventDefault();
+    }
+  };
+  svg.onpointermove=e=>{
+    if(st.drag){
+      const d=st.drag,n=r.pts.length,i=d.i,o=d.orig;
+      const p=world(e).map(snapv).map(r2);
+      if(!d.moved&&Math.hypot(p[0]-o[i][0],p[1]-o[i][1])<0.03)return;
+      d.moved=true;r.pts=o.map(q=>[...q]);r.pts[i]=p;
+      if(ortho())[(i+n-1)%n,(i+1)%n].forEach(j=>{        // garder les murs voisins droits
+        if(Math.abs(o[j][1]-o[i][1])<1e-6)r.pts[j][1]=p[1];
+        else if(Math.abs(o[j][0]-o[i][0])<1e-6)r.pts[j][0]=p[0];
+      });
+      refresh();
+    }else if(r.open&&r.pts.length&&e.pointerType==='mouse'){st.hover=nextPoint(e);drawPoly(el,r,null)}
+  };
+  svg.onpointerup=e=>{
+    if(!st.drag)return;
+    const d=st.drag;st.drag=null;
+    if(d.moved){st.noClick=true;setTimeout(()=>st.noClick=false,0);persist();refresh()}
+    else{st.sel=st.sel===d.i?null:d.i;rebuild()}
+  };
+  svg.onpointerleave=()=>{if(st.hover){st.hover=null;if(r.open)drawPoly(el,r,null)}};
+  svg.onclick=e=>{
+    if(st.noClick)return;
+    const lab=e.target.closest('[data-e]'),mid=e.target.closest('[data-m]'),vt=e.target.closest('[data-v]');
+    const n=r.pts.length;
+    if(lab){                                            // taper la mesure exacte d'un mur
+      const i=+lab.dataset.e,a=r.pts[i],b=r.pts[(i+1)%n],L=Math.hypot(b[0]-a[0],b[1]-a[1]);
+      const val=prompt(`Longueur exacte du mur (m) :`,String(r2(L)).replace('.',','));
+      if(val==null)return;const nl=num(val);if(!(nl>0)){alert('Longueur invalide');return}
+      const ux=(b[0]-a[0])/L,uy=(b[1]-a[1])/L,d=nl-L,mv=j=>{r.pts[j]=[r2(r.pts[j][0]+ux*d),r2(r.pts[j][1]+uy*d)]};
+      if(r.open){for(let j=i+1;j<n;j++)mv(j)}           // dessin en cours : on décale la suite
+      else{mv((i+1)%n);if(n>3)mv((i+2)%n)}               // forme fermée : le mur suivant glisse parallèlement
+      persist();rebuild();return;
+    }
+    if(mid&&!r.open){const i=+mid.dataset.m,a=r.pts[i],b=r.pts[(i+1)%n];
+      r.pts.splice(i+1,0,[r2(snapv((a[0]+b[0])/2)),r2(snapv((a[1]+b[1])/2))]);st.sel=i+1;persist();rebuild();return}
+    if(!r.open)return;
+    if(vt&&vt.dataset.v==='0'&&n>=3){closeShape(r);st.hover=null;persist();rebuild();return}
+    const p=nextPoint(e);
+    if(n>=3){const f=r.pts[0];if(Math.hypot(p[0]-f[0],p[1]-f[1])*st.k<16){closeShape(r);st.hover=null;persist();rebuild();return}}
+    const last=r.pts[n-1];if(last&&Math.hypot(p[0]-last[0],p[1]-last[1])<0.01)return;
+    r.pts.push(p);st.hover=null;persist();rebuild();
+  };
+  // barre d'outils
+  const q=s=>el.querySelector(s);
+  q('[data-tpl]').onchange=e=>{const k=e.target.value;if(!TEMPLATES[k])return;
+    if(!confirm('Remplacer le dessin par le modèle « '+TEMPLATES[k].label+' » ?')){e.target.value='';return}
+    r.pts=tplPts(k);r.open=false;st.sel=null;persist();rebuild()};
+  q('[data-ortho]').onchange=e=>{r.ortho=e.target.checked;persist()};
+  q('[data-new]').onclick=()=>{if(r.pts.length&&!confirm('Effacer le dessin et recommencer ?'))return;r.pts=[];r.open=true;st.sel=null;persist();rebuild()};
+  const u=q('[data-undo]');if(u)u.onclick=()=>{r.pts.pop();persist();rebuild()};
+  const f=q('[data-finish]');if(f)f.onclick=()=>{if(r.pts.length>=3){closeShape(r);persist();rebuild()}};
+  const dv=q('[data-delv]');if(dv)dv.onclick=()=>{if(st.sel!=null&&r.pts.length>3){r.pts.splice(st.sel,1);st.sel=null;persist();rebuild()}};
 }
 function renderRooms(){
   $('#rooms').innerHTML=cur.rooms.map((r,i)=>{
     const mur=r.type==='mur', poly=!mur&&r.shape==='poly';
+    if(poly)ensurePts(r);
     return `<div class="room" data-i="${i}">
       <div class="head">
         <span class="tag">${mur?'MUR':'PLAFOND'}</span>
@@ -527,7 +686,7 @@ function renderRooms(){
       </div>
       ${mur?'':`<div class="shape-sw"><span>Forme de la pièce :</span>
         <button class="btn${poly?'':' on'}" data-shape="rect">▭ Rectangle</button>
-        <button class="btn${poly?' on':''}" data-shape="poly">⬠ Forme libre (L, T, U, biais…)</button></div>`}
+        <button class="btn${poly?' on':''}" data-shape="poly">✏️ Dessiner la pièce (L, T, U, biais…)</button></div>`}
       <div class="grid">
         ${poly?'':`<label>Longueur (m)<input data-r="L" type="number" step="0.01" inputmode="decimal" value="${esc(r.L)}"></label>
         <label>${mur?'Hauteur (m)':'Largeur (m)'}<input data-r="W" type="number" step="0.01" inputmode="decimal" value="${esc(r.W)}"></label>`}
@@ -535,9 +694,9 @@ function renderRooms(){
         ${mur?'':`<label>Sens des fourrures<select data-r="dir"><option value="auto"${r.dir!=='L'&&r.dir!=='W'?' selected':''}>Automatique (le plus économique)</option><option value="L"${r.dir==='L'?' selected':''}>${poly?'Horizontal (→)':'Dans la longueur (toul)'}</option><option value="W"${r.dir==='W'?' selected':''}>${poly?'Vertical (↓)':'Dans la largeur (3ord)'}</option></select></label>`}
         <label>Nombre identique<input data-r="count" type="number" min="1" step="1" value="${esc(r.count||1)}"></label>
       </div>
-      ${poly?wallsEditor(r):''}
+      ${poly?drawEditor(r):''}
       <div class="res" data-res></div>
-      ${mur?'':'<div data-cmp style="margin-top:10px"></div><div class="plan" data-plan></div>'}
+      ${mur?'':`<div data-cmp style="margin-top:10px"></div>${poly?'':'<div class="plan" data-plan></div>'}`}
     </div>`}).join('') || '<div class="empty">Ajoutez une pièce (plafond) ou un mur.</div>';
   $$('#rooms .room').forEach(el=>{
     const r=cur.rooms[+el.dataset.i];
@@ -548,48 +707,25 @@ function renderRooms(){
     el.querySelector('[data-act=dup]').onclick=()=>{const c=structuredClone(r);c.id=uid();c.name=r.name+' (copie)';cur.rooms.splice(+el.dataset.i+1,0,c);rebuild()};
     el.querySelectorAll('[data-shape]').forEach(b=>b.onclick=()=>{
       r.shape=b.dataset.shape;
-      if(r.shape==='poly'&&!(r.walls&&r.walls.length)){
-        const L=num(r.L)||4,W=num(r.W)||3;
-        r.walls=[{len:L,ang:0},{len:W,ang:90},{len:L,ang:180},{len:W,ang:270}];
+      if(r.shape==='poly'&&!(r.pts&&r.pts.length)){
+        const L=num(r.L),W=num(r.W);
+        if(L>0&&W>0){r.pts=[[0,0],[L,0],[L,W],[0,W]];r.open=false}else{r.pts=[];r.open=true}
       }
       rebuild();
     });
-    // --- murs (forme libre) ---
-    const tpl=el.querySelector('[data-tpl]');
-    if(tpl)tpl.onchange=()=>{const t=TEMPLATES[tpl.value];if(!t)return;
-      if((r.walls||[]).length&&!confirm('Remplacer les murs actuels par le modèle « '+t.label+' » ?')){tpl.value='';return}
-      r.walls=t.walls.map(([len,ang])=>({len,ang}));rebuild()};
-    el.querySelectorAll('tr[data-w]').forEach(tr=>{
-      const w=r.walls[+tr.dataset.w];
-      tr.querySelector('[data-wf=len]').oninput=e=>{w.len=e.target.value;refresh()};
-      tr.querySelector('[data-wf=dir]').onchange=e=>{if(e.target.value==='x'){w.custom=true}else{w.ang=+e.target.value;w.custom=false}rebuild()};
-      const an=tr.querySelector('[data-wf=ang]');if(an)an.oninput=()=>{w.ang=an.value;w.custom=true;refresh()};
-      tr.querySelector('[data-wdel]').onclick=()=>{r.walls.splice(+tr.dataset.w,1);rebuild()};
-    });
-    const add=el.querySelector('[data-wadd]');
-    if(add)add.onclick=()=>{const ws=r.walls=r.walls||[];const last=ws[ws.length-1];ws.push({len:'',ang:last?(num(last.ang)+90)%360:0});rebuild();
-      const ins=el.parentNode.querySelectorAll(`.room[data-i="${el.dataset.i}"] [data-wf=len]`);ins[ins.length-1]?.focus()};
-    const cl=el.querySelector('[data-wclose]');
-    if(cl)cl.onclick=()=>{const pts=wallPoints(r.walls);const [x,y]=pts[pts.length-1];const d=Math.hypot(x,y);
-      if(d<0.005){toast('Le tracé est déjà fermé');return}
-      let a=Math.atan2(-y,-x)*180/Math.PI;a=Math.round(((a%360)+360)%360*10)/10;
-      r.walls.push({len:r2(d),ang:a,custom:!DIRS.some(v=>v[0]===a)});rebuild();toast('Mur de fermeture ajouté : '+fq(d)+' m')};
+    if(r.shape==='poly'&&r.type!=='mur')attachDraw(el,r,rebuild,()=>{updRoom(el,r);renderSummary()});
     updRoom(el,r);
   });
 }
 function updRoom(el,r){
   const c=calcRoom(r), q=c.q, mur=r.type==='mur', poly=!mur&&r.shape==='poly';
   const box=(v,l)=>`<div><b>${fq(v)}</b><span>${l}</span></div>`;
-  el.querySelector('[data-res]').innerHTML = !c.area ? `<span class="hint">${poly?'Saisissez les murs de la pièce…':'Saisissez les dimensions…'}</span>` :
+  el.querySelector('[data-res]').innerHTML = !c.area ? `<span class="hint">${poly?(r.open?'Terminez le dessin (fermez la forme) pour voir le calcul…':'Dessinez la pièce…'):'Saisissez les dimensions…'}</span>` :
     box(c.area,'m² de surface')+box(c.perim,mur?'m de rail':'m de périmètre')+box(q.plaque,'plaques')+
     (mur? box(q.rail,'rails')+box(q.montant,'montants ('+c.lines+' lignes)')
         : box(q.corniere,'cornières')+box(q.fourrure,'barres de fourrure ('+c.lines*c.mult+' lignes)')+box(q.tige,'tiges'))+
     box(q.cheville,'chevilles');
-  const cz=el.querySelector('[data-close]');
-  if(cz){const g=c.geom;
-    cz.innerHTML=!g?'':g.gap>=0.005
-      ?`<span style="color:var(--danger)">⚠️ Le tracé ne revient pas au point de départ : il manque <b>${fq(g.gap)} m</b>. Vérifiez les mesures ou cliquez « Fermer automatiquement ». Le côté manquant est dessiné en rouge pointillé (il est compté dans le calcul).</span>`
-      :`<span style="color:var(--ok)">✅ Tracé fermé — ${g.edges.length} murs.</span>`}
+  if(poly)drawPoly(el,r,c);
   const pl=el.querySelector('[data-plan]');
   if(pl)pl.innerHTML=planSVG(r,c);
   const cmp=el.querySelector('[data-cmp]');
@@ -607,32 +743,26 @@ function planSVG(r,c){
   const lay=c.opts[c.dir], sp=S.spacing, tsp=S.tigeSpacing;
   const pad=46, k=Math.min(560/Math.max(g.w,0.1),300/Math.max(g.h,0.1));
   const W=g.w*k+2*pad, H=g.h*k+2*pad, X=x=>pad+x*k, Y=y=>pad+y*k;
-  const n=g.pts.length, open=g.gap>=0.005;
+  const n=g.pts.length;
   let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">`;
   s+=`<polygon points="${g.pts.map(p=>X(p[0])+','+Y(p[1])).join(' ')}" fill="#faf7f1" stroke="none"/>`;
-  // fourrures + tiges
   lay.segs.forEach(sg=>{
     const A=lay.horiz?[sg.x1,sg.y]:[sg.y,sg.x1], B=lay.horiz?[sg.x2,sg.y]:[sg.y,sg.x2];
     s+=`<line x1="${X(A[0])}" y1="${Y(A[1])}" x2="${X(B[0])}" y2="${Y(B[1])}" stroke="#1f2a37" stroke-width="2"/>`;
     sg.t.forEach(t=>{const P=lay.horiz?[t,sg.y]:[sg.y,t];s+=`<circle cx="${X(P[0])}" cy="${Y(P[1])}" r="3.2" fill="#b91c1c"/>`});
   });
-  // murs (cornières) + cotes
   for(let i=0;i<n;i++){
-    const p=g.pts[i],q=g.pts[(i+1)%n],closing=open&&i===n-1;
-    s+=`<line x1="${X(p[0])}" y1="${Y(p[1])}" x2="${X(q[0])}" y2="${Y(q[1])}" stroke="${closing?'#b91c1c':'#b8893b'}" stroke-width="4" ${closing?'stroke-dasharray="8 6"':''} stroke-linecap="round"/>`;
+    const p=g.pts[i],q=g.pts[(i+1)%n];
+    s+=`<line x1="${X(p[0])}" y1="${Y(p[1])}" x2="${X(q[0])}" y2="${Y(q[1])}" stroke="#b8893b" stroke-width="4" stroke-linecap="round"/>`;
     const dx=q[0]-p[0],dy=q[1]-p[1],l=Math.hypot(dx,dy)||1;
-    const nx=(g.sign>0?dy:-dy)/l, ny=(g.sign>0?-dx:dx)/l;          // normale vers l'extérieur
-    const mx=X((p[0]+q[0])/2)+nx*17, my=Y((p[1]+q[1])/2)+ny*17;
-    const label=(r.shape==='poly'?(closing?'? ':(i+1)+' · '):'')+fq(g.edges[i])+' m';
-    s+=`<text x="${mx}" y="${my+4}" text-anchor="middle" font-size="12" font-weight="600" fill="${closing?'#b91c1c':'#374151'}" paint-order="stroke" stroke="#fff" stroke-width="3">${label}</text>`;
+    const nx=(g.sign>0?dy:-dy)/l, ny=(g.sign>0?-dx:dx)/l;
+    s+=`<text x="${X((p[0]+q[0])/2)+nx*17}" y="${Y((p[1]+q[1])/2)+ny*17+4}" text-anchor="middle" font-size="12" font-weight="600" fill="#374151" paint-order="stroke" stroke="#fff" stroke-width="3">${fq(g.edges[i])} m</text>`;
   }
-  g.pts.forEach(p=>s+=`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="3" fill="#94692a"/>`);
-  if(r.shape==='poly'){const p=g.pts[0];s+=`<text x="${X(p[0])-6}" y="${Y(p[1])-6}" text-anchor="end" font-size="11" fill="#94692a">départ</text>`}
   s+='</svg>';
-  return s+`<div class="legend"><span><i style="background:#b8893b"></i>Cornières (murs)</span><span><i style="background:#1f2a37"></i>Fourrures tous les ${fq(sp*100)} cm</span><span><i style="background:#b91c1c;height:8px;width:8px;border-radius:50%"></i>Tiges tous les ${fq(tsp*100)} cm</span><span>Encombrement : ${fq(g.w)} × ${fq(g.h)} m</span></div>`;
+  return s+`<div class="legend"><span><i style="background:#b8893b"></i>Cornières (murs)</span><span><i style="background:#1f2a37"></i>Fourrures tous les ${fq(sp*100)} cm</span><span><i style="background:#b91c1c;height:8px;width:8px;border-radius:50%"></i>Tiges tous les ${fq(tsp*100)} cm</span></div>`;
 }
 $('#add-plafond').onclick=()=>{cur.rooms.push(newRoom('plafond'));persist();renderRooms();renderSummary()};
-$('#add-poly').onclick=()=>{const r=newRoom('plafond');r.shape='poly';r.walls=TEMPLATES.L.walls.map(([len,ang])=>({len,ang}));cur.rooms.push(r);persist();renderRooms();renderSummary();
+$('#add-poly').onclick=()=>{const r=newRoom('plafond');r.shape='poly';r.pts=[];r.open=true;cur.rooms.push(r);persist();renderRooms();renderSummary();
   const els=$$('#rooms .room');els[els.length-1].scrollIntoView({behavior:'smooth'})};
 $('#add-mur').onclick=()=>{cur.rooms.push(newRoom('mur'));persist();renderRooms();renderSummary()};
 
@@ -754,7 +884,7 @@ $('#import').onchange=async e=>{
 /* ===================== Hors ligne ===================== */
 function net(){const on=navigator.onLine;$('#net').textContent=on?'En ligne':'Hors ligne';$('#net').classList.toggle('off',!on)}
 addEventListener('online',net);addEventListener('offline',net);net();
-const APP_VERSION='v5';$('#ver').textContent=APP_VERSION;
+const APP_VERSION='v6';$('#ver').textContent=APP_VERSION;
 // Mise à jour automatique : dès qu'une nouvelle version est en ligne, l'app se recharge toute seule
 if('serviceWorker' in navigator){
   let reloaded=false;const hadSW=!!navigator.serviceWorker.controller;
