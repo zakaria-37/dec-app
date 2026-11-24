@@ -75,6 +75,8 @@ tfoot td{font-weight:700}
 .walls{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px}
 .walls td,.walls th{padding:5px 6px}
 .walls select{width:auto}
+.shape-sw{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:13px;color:var(--muted)}
+.shape-sw .btn.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;z-index:99;opacity:0;transition:.25s;pointer-events:none}
 .toast.on{opacity:1}
 
@@ -118,7 +120,7 @@ tfoot td{font-weight:700}
 
 <header class="top">
   <svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="10" fill="#b8893b"/><path d="M8 14h32v4H8zM8 14l4 6h24l4-6" fill="#fff" opacity=".95"/><path d="M14 24h20M14 30h20M14 36h20" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
-  <div><h1 id="hdr-name">Abdou Deco</h1><small>Devis plaque de plâtre &amp; faux plafonds</small></div>
+  <div><h1 id="hdr-name">Abdou Deco</h1><small>Devis plaque de plâtre &amp; faux plafonds · <span id="ver"></span></small></div>
   <span class="net" id="net">En ligne</span>
 </header>
 
@@ -158,7 +160,8 @@ tfoot td{font-weight:700}
 
   <div class="card">
     <div class="row" style="margin-bottom:10px"><h2 style="margin:0">Pièces &amp; murs</h2><span class="sp"></span>
-      <button class="btn sm" id="add-plafond">＋ Plafond (pièce)</button>
+      <button class="btn sm" id="add-plafond">＋ Plafond rectangle</button>
+      <button class="btn sm pri" id="add-poly">＋ Pièce forme libre (L, T…)</button>
       <button class="btn sm" id="add-mur">＋ Mur / cloison</button>
     </div>
     <div id="rooms"></div>
@@ -522,8 +525,10 @@ function renderRooms(){
         <button class="btn sm" data-act="dup" title="Dupliquer">⧉</button>
         <button class="btn sm del" data-act="rm" title="Supprimer">✕</button>
       </div>
+      ${mur?'':`<div class="shape-sw"><span>Forme de la pièce :</span>
+        <button class="btn${poly?'':' on'}" data-shape="rect">▭ Rectangle</button>
+        <button class="btn${poly?' on':''}" data-shape="poly">⬠ Forme libre (L, T, U, biais…)</button></div>`}
       <div class="grid">
-        ${mur?'':`<label>Forme de la pièce<select data-shape><option value="rect"${poly?'':' selected'}>Rectangle</option><option value="poly"${poly?' selected':''}>Forme libre (mur par mur)</option></select></label>`}
         ${poly?'':`<label>Longueur (m)<input data-r="L" type="number" step="0.01" inputmode="decimal" value="${esc(r.L)}"></label>
         <label>${mur?'Hauteur (m)':'Largeur (m)'}<input data-r="W" type="number" step="0.01" inputmode="decimal" value="${esc(r.W)}"></label>`}
         <label>${mur?'Ouvertures à déduire (m²)':'Surface à déduire (m²)'}<input data-r="deduct" type="number" step="0.01" inputmode="decimal" value="${esc(r.deduct)}"></label>
@@ -541,15 +546,14 @@ function renderRooms(){
     el.querySelectorAll('[data-r]').forEach(inp=>inp.oninput=inp.onchange=()=>{r[inp.dataset.r]=inp.value;refresh()});
     el.querySelector('[data-act=rm]').onclick=()=>{if(confirm('Supprimer « '+(r.name||'cet élément')+' » ?')){cur.rooms.splice(+el.dataset.i,1);rebuild()}};
     el.querySelector('[data-act=dup]').onclick=()=>{const c=structuredClone(r);c.id=uid();c.name=r.name+' (copie)';cur.rooms.splice(+el.dataset.i+1,0,c);rebuild()};
-    const sh=el.querySelector('[data-shape]');
-    if(sh)sh.onchange=()=>{
-      r.shape=sh.value;
+    el.querySelectorAll('[data-shape]').forEach(b=>b.onclick=()=>{
+      r.shape=b.dataset.shape;
       if(r.shape==='poly'&&!(r.walls&&r.walls.length)){
         const L=num(r.L)||4,W=num(r.W)||3;
         r.walls=[{len:L,ang:0},{len:W,ang:90},{len:L,ang:180},{len:W,ang:270}];
       }
       rebuild();
-    };
+    });
     // --- murs (forme libre) ---
     const tpl=el.querySelector('[data-tpl]');
     if(tpl)tpl.onchange=()=>{const t=TEMPLATES[tpl.value];if(!t)return;
@@ -628,6 +632,8 @@ function planSVG(r,c){
   return s+`<div class="legend"><span><i style="background:#b8893b"></i>Cornières (murs)</span><span><i style="background:#1f2a37"></i>Fourrures tous les ${fq(sp*100)} cm</span><span><i style="background:#b91c1c;height:8px;width:8px;border-radius:50%"></i>Tiges tous les ${fq(tsp*100)} cm</span><span>Encombrement : ${fq(g.w)} × ${fq(g.h)} m</span></div>`;
 }
 $('#add-plafond').onclick=()=>{cur.rooms.push(newRoom('plafond'));persist();renderRooms();renderSummary()};
+$('#add-poly').onclick=()=>{const r=newRoom('plafond');r.shape='poly';r.walls=TEMPLATES.L.walls.map(([len,ang])=>({len,ang}));cur.rooms.push(r);persist();renderRooms();renderSummary();
+  const els=$$('#rooms .room');els[els.length-1].scrollIntoView({behavior:'smooth'})};
 $('#add-mur').onclick=()=>{cur.rooms.push(newRoom('mur'));persist();renderRooms();renderSummary()};
 
 function renderExtras(){
@@ -748,7 +754,16 @@ $('#import').onchange=async e=>{
 /* ===================== Hors ligne ===================== */
 function net(){const on=navigator.onLine;$('#net').textContent=on?'En ligne':'Hors ligne';$('#net').classList.toggle('off',!on)}
 addEventListener('online',net);addEventListener('offline',net);net();
-if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+const APP_VERSION='v5';$('#ver').textContent=APP_VERSION;
+// Mise à jour automatique : dès qu'une nouvelle version est en ligne, l'app se recharge toute seule
+if('serviceWorker' in navigator){
+  let reloaded=false;const hadSW=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloaded||!hadSW)return;reloaded=true;location.reload()});
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
+    reg.update();setInterval(()=>reg.update(),30*60*1000);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)reg.update()});
+  }).catch(()=>{}));
+}
 if(navigator.storage?.persist)navigator.storage.persist();
 
 $('#hdr-name').textContent=S.company.name||'Abdou Deco';
