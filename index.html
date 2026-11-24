@@ -280,7 +280,7 @@ const MATS = [
 const DEF = {
   company:{name:'Abdou Deco', slogan:'Plaque de plâtre · Faux plafonds · Décoration', phone:'', address:'', email:'', legal:''},
   currency:'DA', validity:30,
-  plaqueL:3, plaqueW:1.2, barLen:3, spacing:0.6, tigeSpacing:0.6, waste:10,
+  plaqueL:3, plaqueW:1.2, barLen:3, spacing:0.6, tigeSpacing:0.6, waste:0, v:2,
   visM2:15, bandeM2:1.5, bandeRoll:75, enduitM2:0.4, enduitSac:25,
   prices:{plaque:0,corniere:0,fourrure:0,tige:0,rail:0,montant:0,cheville:0,vis:0,bande:0,enduit:0,mo_plafond:0,mo_mur:0},
   defaultNotes:'Prix valables pour les dimensions indiquées. Toute modification sur chantier fera l\'objet d\'un avenant.\nAcompte de 50 % à la commande, solde à la fin des travaux.',
@@ -288,6 +288,7 @@ const DEF = {
 const LS_S='abdoudeco.settings', LS_P='abdoudeco.projects';
 const merge=(a,b)=>{for(const k in b){if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k]))a[k]=merge(a[k]||{},b[k]);else a[k]=b[k]}return a};
 let S = merge(structuredClone(DEF), JSON.parse(localStorage.getItem(LS_S)||'{}'));
+if((S.v||1)<2){S.waste=0;S.v=2;localStorage.setItem(LS_S,JSON.stringify(S))}
 let P = JSON.parse(localStorage.getItem(LS_P)||'[]');
 let cur = null; // projet courant
 
@@ -311,7 +312,7 @@ function calcRoom(r){
   const o={area:0,perim:0,lines:0,tigesPerLine:0,q};
   if(!(L>0&&W>0)) return o;
   o.area=Math.max(0,L*W-ded);
-  q.plaque=C(o.area*(1+S.waste/100)/pa);
+  q.plaque=r2(o.area*(1+S.waste/100)/pa);   // nombre exact (avec virgule)
   if(r.type==='mur'){
     o.perim=2*L;                      // rail haut + rail bas
     q.rail=C(o.perim/bar);
@@ -339,6 +340,7 @@ function calcProject(p){
   const q={};MATS.forEach(m=>q[m.k]=0);
   let aP=0,aM=0;
   rooms.forEach(({r,c})=>{for(const k in c.q)q[k]+=c.q[k]; if(r.type==='mur')aM+=c.area; else aP+=c.area;});
+  q.plaque=r2(q.plaque);
   const area=aP+aM;
   q.vis=C(area*S.visM2);
   q.bande=area?C(area*S.bandeM2/S.bandeRoll):0;
