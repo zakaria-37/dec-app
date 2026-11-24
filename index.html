@@ -51,7 +51,7 @@ textarea{min-height:70px;resize:vertical}
 .res b{display:block;font-size:18px}
 .res span{font-size:12px;color:var(--muted)}
 .plan{margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px}
-.plan svg{width:100%;height:auto;max-height:260px;display:block}
+.plan svg{width:100%;height:auto;max-height:440px;display:block}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:6px}
 .legend i{display:inline-block;width:14px;height:4px;vertical-align:middle;margin-right:4px}
 table{width:100%;border-collapse:collapse;font-size:14px}
@@ -72,6 +72,9 @@ tfoot td{font-weight:700}
 .hide{display:none!important}
 .cmp{background:#fff;border:1px solid var(--line);border-radius:8px;font-size:13px}
 .cmp tr.on td{background:#fdf6e9;font-weight:700}
+.walls{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px}
+.walls td,.walls th{padding:5px 6px}
+.walls select{width:auto}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;z-index:99;opacity:0;transition:.25s;pointer-events:none}
 .toast.on{opacity:1}
 
@@ -307,24 +310,71 @@ const C=x=>Math.ceil(x-1e-9);
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),1800)}
 
 /* ===================== Calculs ===================== */
-// Fourrures posées dans le sens "along" (longueur de chaque ligne), réparties sur "across".
-// - lignes : une tous les 60 cm ; les deux bords reposent sur les cornières (non comptés)
-// - tiges : une tous les 60 cm sur chaque ligne ; les bouts reposent sur les cornières
-// - barres : vraie découpe des barres de 3 m (une ligne plus longue qu'une barre = barre + morceau,
-//   les morceaux sont pris dans les chutes quand c'est possible)
-function fourrureLayout(along,across){
-  const sp=S.spacing,tsp=S.tigeSpacing,bar=S.barLen;
-  const lines=Math.max(1,C(across/sp)-1);
-  const tpl=Math.max(1,C(along/tsp)-1);
-  let full=0; const rest=[];
-  for(let i=0;i<lines;i++){
-    const f=Math.floor(along/bar+1e-9); full+=f;
-    const rem=r2(along-f*bar); if(rem>0.01)rest.push(rem);
+// ---- Géométrie de la pièce ----
+// Rectangle : longueur × largeur. Forme libre : on fait le tour de la pièce mur par mur
+// (longueur + direction), comme avec un mètre sur le chantier.
+const DIRS=[[0,'→ Droite'],[90,'↓ Bas'],[180,'← Gauche'],[270,'↑ Haut'],[45,'↘ Diag. bas-droite'],[135,'↙ Diag. bas-gauche'],[225,'↖ Diag. haut-gauche'],[315,'↗ Diag. haut-droite']];
+const TEMPLATES={
+  L:{label:'Forme en L',walls:[[5,0],[3,90],[2,180],[2,90],[3,180],[5,270]]},
+  T:{label:'Forme en T',walls:[[6,0],[2,90],[2,180],[3,90],[2,180],[3,270],[2,180],[2,270]]},
+  U:{label:'Forme en U',walls:[[6,0],[4,90],[2,180],[2,270],[2,180],[2,90],[2,180],[4,270]]},
+  pan:{label:'Rectangle avec pan coupé',walls:[[4,0],[1.41,45],[2,90],[5,180],[3,270]]},
+};
+function wallPoints(walls){
+  let x=0,y=0;const pts=[[0,0]];
+  (walls||[]).forEach(w=>{const l=num(w.len),a=num(w.ang)*Math.PI/180;if(l>0){x+=l*Math.cos(a);y+=l*Math.sin(a);pts.push([x,y])}});
+  return pts;
+}
+function roomGeom(r){
+  let pts,gap=0;
+  if(r.shape==='poly'){
+    pts=wallPoints(r.walls);
+    if(pts.length<3)return null;
+    const [lx,ly]=pts[pts.length-1];gap=Math.hypot(lx,ly);
+    if(gap<0.005)pts.pop();                 // le dernier mur revient au départ : tracé fermé
+  }else{
+    const L=num(r.L),W=num(r.W);if(!(L>0&&W>0))return null;
+    pts=[[0,0],[L,0],[L,W],[0,W]];
   }
-  rest.sort((a,b)=>b-a);                     // rangement des morceaux dans les barres (plus grand d'abord)
-  const bins=[];
-  rest.forEach(p=>{const b=bins.find(x=>x+p<=bar+1e-9); if(b!==undefined)bins[bins.indexOf(b)]+=p; else bins.push(p)});
-  return {along,across,lines,tpl,tiges:lines*tpl,bars:full+bins.length,pieces:rest.length};
+  pts=pts.map(([x,y])=>[Math.round(x*1e4)/1e4,Math.round(y*1e4)/1e4]);
+  const mx=Math.min(...pts.map(p=>p[0])),my=Math.min(...pts.map(p=>p[1]));
+  pts=pts.map(([x,y])=>[x-mx,y-my]);
+  let a2=0,per=0;const edges=[];
+  for(let i=0;i<pts.length;i++){const p=pts[i],q=pts[(i+1)%pts.length];a2+=p[0]*q[1]-q[0]*p[1];const l=Math.hypot(q[0]-p[0],q[1]-p[1]);per+=l;edges.push(l)}
+  const area=Math.abs(a2)/2;if(area<0.01)return null;
+  return {pts,edges,area,perim:per,gap,sign:Math.sign(a2),w:Math.max(...pts.map(p=>p[0])),h:Math.max(...pts.map(p=>p[1]))};
+}
+// Découpe des barres de 3 m : chaque morceau > 3 m = barres entières + reste ; les restes sont
+// rangés dans les chutes (plus grand d'abord).
+function cutBars(pieces){
+  const bar=S.barLen;let full=0;const rest=[];
+  pieces.forEach(len=>{const f=Math.floor(len/bar+1e-9);full+=f;const rem=len-f*bar;if(rem>0.01)rest.push(rem)});
+  rest.sort((a,b)=>b-a);const bins=[];
+  rest.forEach(p=>{const i=bins.findIndex(x=>x+p<=bar+1e-9);if(i>=0)bins[i]+=p;else bins.push(p)});
+  return full+bins.length;
+}
+// Fourrures : une ligne tous les 60 cm à travers la forme réelle de la pièce (les bords
+// reposent sur les cornières). Chaque ligne est coupée par les murs → morceaux réels.
+// Tiges : une tous les 60 cm sur chaque morceau de fourrure (les bouts sont sur les cornières).
+function scanLayout(pts,horiz){
+  const P=horiz?pts:pts.map(([x,y])=>[y,x]);
+  const sp=S.spacing,tsp=S.tigeSpacing;
+  const H=Math.max(...P.map(p=>p[1]));
+  const segs=[];let lines=0;
+  for(let k=1;k*sp<H-1e-6;k++){
+    const y=k*sp,xs=[];
+    for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length];
+      if((a[1]<=y&&b[1]>y)||(b[1]<=y&&a[1]>y))xs.push(a[0]+(y-a[1])*(b[0]-a[0])/(b[1]-a[1]))}
+    xs.sort((a,b)=>a-b);let any=false;
+    for(let i=0;i+1<xs.length;i+=2){
+      const x1=xs[i],x2=xs[i+1];if(x2-x1<0.05)continue;any=true;
+      const t=[];for(let j=Math.floor(x1/tsp+1e-9)+1;j*tsp<x2-1e-6;j++)if(j*tsp>x1+1e-6)t.push(j*tsp);
+      segs.push({x1,x2,y,t});
+    }
+    if(any)lines++;
+  }
+  const lens=segs.map(g=>g.x2-g.x1);
+  return {horiz,segs,lines,tiges:segs.reduce((s,g)=>s+g.t.length,0),bars:cutBars(lens),total:lens.reduce((a,b)=>a+b,0),maxLen:Math.max(0,...lens)};
 }
 function layoutCost(l){
   const pf=num(S.prices.fourrure),pt=num(S.prices.tige),pc=num(S.prices.cheville);
@@ -333,34 +383,34 @@ function layoutCost(l){
 }
 function calcRoom(r){
   const L=num(r.L), W=num(r.W), ded=num(r.deduct), mult=Math.max(1,Math.round(num(r.count)||1));
-  const pa=S.plaqueL*S.plaqueW, bar=S.barLen, sp=S.spacing, tsp=S.tigeSpacing;
+  const pa=S.plaqueL*S.plaqueW, bar=S.barLen, sp=S.spacing;
   const q={plaque:0,corniere:0,fourrure:0,tige:0,rail:0,montant:0,cheville:0};
-  const o={area:0,perim:0,lines:0,tigesPerLine:0,q};
-  if(!(L>0&&W>0)) return o;
-  o.area=Math.max(0,L*W-ded);
-  q.plaque=r2(o.area*(1+S.waste/100)/pa);   // nombre exact (avec virgule)
+  const o={area:0,perim:0,lines:0,q,mult};
   if(r.type==='mur'){
+    if(!(L>0&&W>0)) return o;
+    o.area=Math.max(0,L*W-ded);
     o.perim=2*L;                      // rail haut + rail bas
     q.rail=C(o.perim/bar);
     o.lines=C(L/sp)+1;                // montants verticaux tous les 60 cm (bords compris)
     q.montant=C(o.lines*W/bar);
     q.cheville=C(o.perim/sp)+2;       // fixation des rails
   }else{
-    o.perim=2*(L+W);
+    const g=roomGeom(r);if(!g)return o;
+    o.geom=g;
+    o.area=Math.max(0,g.area-ded);
+    o.perim=g.perim;
     q.corniere=C(o.perim/bar);
-    // On calcule les deux sens possibles, puis on garde celui choisi (ou le plus économique)
-    const optL=fourrureLayout(L,W), optW=fourrureLayout(W,L);
-    o.opts={L:optL,W:optW};
-    o.best=layoutCost(optW)<layoutCost(optL)?'W':'L';
+    o.opts={L:scanLayout(g.pts,true),W:scanLayout(g.pts,false)};
+    o.best=layoutCost(o.opts.W)<layoutCost(o.opts.L)?'W':'L';
     o.dir=(r.dir==='L'||r.dir==='W')?r.dir:o.best;
     const lay=o.opts[o.dir];
-    Object.assign(o,{along:lay.along,across:lay.across,lines:lay.lines,tigesPerLine:lay.tpl,pieces:lay.pieces});
+    o.lines=lay.lines;
     q.fourrure=lay.bars;
     q.tige=lay.tiges;
-    q.cheville=q.tige+C(o.perim/sp);             // tiges + fixation cornières
+    q.cheville=q.tige+C(o.perim/sp);  // tiges + fixation cornières
   }
-  if(mult>1){o.area*=mult;o.perim*=mult;for(const k in q)q[k]*=mult}
-  o.mult=mult;
+  q.plaque=r2(o.area*(1+S.waste/100)/pa);   // nombre exact (avec virgule)
+  if(mult>1){o.area*=mult;o.perim*=mult;for(const k in q)q[k]*=mult;q.plaque=r2(q.plaque)}
   return o;
 }
 function calcProject(p){
@@ -425,7 +475,7 @@ function nextNo(){
   const n=P.filter(p=>(p.no||'').startsWith('DV-'+y)).map(p=>parseInt(p.no.split('-')[2])||0);
   return `DV-${y}-${String((n.length?Math.max(...n):0)+1).padStart(3,'0')}`;
 }
-function newRoom(type){return {id:uid(),type,name:type==='mur'?'Mur':'Chambre',L:'',W:'',deduct:'',dir:'auto',count:1}}
+function newRoom(type){return {id:uid(),type,name:type==='mur'?'Mur':'Chambre',L:'',W:'',deduct:'',dir:'auto',count:1,shape:'rect',walls:[]}}
 $('#new-project').onclick=()=>{
   cur={id:uid(),no:nextNo(),title:'',client:'',phone:'',address:'',date:new Date().toISOString().slice(0,10),
        status:'Brouillon',rooms:[newRoom('plafond')],extras:[],discount:0,tva:0,showMat:'1',notes:S.defaultNotes,updated:Date.now()};
@@ -440,9 +490,31 @@ function renderEdit(){
   $$('[data-p]').forEach(i=>{i.value=cur[i.dataset.p]??'';i.oninput=()=>{cur[i.dataset.p]=i.value;persist();renderSummary()}});
   renderRooms();renderExtras();renderSummary();
 }
+function dirOptions(ang,custom){
+  const a=((num(ang)%360)+360)%360, known=!custom&&DIRS.some(d=>d[0]===a);
+  return DIRS.map(([v,t])=>`<option value="${v}"${known&&a===v?' selected':''}>${t}</option>`).join('')+`<option value="x"${known?'':' selected'}>Angle libre…</option>`;
+}
+function wallsEditor(r){
+  const ws=r.walls||[];
+  return `<div class="walls">
+    <div class="row" style="margin-bottom:6px"><b style="font-size:14px">Murs de la pièce</b><span class="sp"></span>
+      <select data-tpl style="width:auto"><option value="">Modèle de forme…</option>${Object.entries(TEMPLATES).map(([k,t])=>`<option value="${k}">${t.label}</option>`).join('')}</select></div>
+    <p class="hint" style="margin:0 0 8px">Faites le tour de la pièce en partant d'un coin : pour chaque mur, sa longueur et la direction dans laquelle vous avancez. Le dessin se met à jour en direct.</p>
+    <table><thead><tr><th>#</th><th>Longueur (m)</th><th>Direction</th><th></th></tr></thead><tbody>
+    ${ws.map((w,i)=>{const a=((num(w.ang)%360)+360)%360,custom=w.custom||!DIRS.some(d=>d[0]===a);
+      return `<tr data-w="${i}"><td><b>${i+1}</b></td>
+      <td><input data-wf="len" type="number" step="0.01" inputmode="decimal" value="${esc(w.len)}" style="width:90px"></td>
+      <td><div class="row" style="flex-wrap:nowrap"><select data-wf="dir">${dirOptions(w.ang,w.custom)}</select>
+        ${custom?`<input data-wf="ang" type="number" step="0.1" value="${esc(w.ang)}" style="width:80px" title="Angle en degrés (0 = droite, 90 = bas)">°`:''}</div></td>
+      <td><button class="btn sm del" data-wdel>✕</button></td></tr>`}).join('')}
+    </tbody></table>
+    <div class="row" style="margin-top:8px"><button class="btn sm" data-wadd>＋ Ajouter un mur</button><button class="btn sm" data-wclose>⟲ Fermer automatiquement</button></div>
+    <div data-close style="margin-top:8px;font-size:13px"></div>
+  </div>`;
+}
 function renderRooms(){
   $('#rooms').innerHTML=cur.rooms.map((r,i)=>{
-    const mur=r.type==='mur';
+    const mur=r.type==='mur', poly=!mur&&r.shape==='poly';
     return `<div class="room" data-i="${i}">
       <div class="head">
         <span class="tag">${mur?'MUR':'PLAFOND'}</span>
@@ -451,60 +523,109 @@ function renderRooms(){
         <button class="btn sm del" data-act="rm" title="Supprimer">✕</button>
       </div>
       <div class="grid">
-        <label>Longueur (m)<input data-r="L" type="number" step="0.01" inputmode="decimal" value="${esc(r.L)}"></label>
-        <label>${mur?'Hauteur (m)':'Largeur (m)'}<input data-r="W" type="number" step="0.01" inputmode="decimal" value="${esc(r.W)}"></label>
+        ${mur?'':`<label>Forme de la pièce<select data-shape><option value="rect"${poly?'':' selected'}>Rectangle</option><option value="poly"${poly?' selected':''}>Forme libre (mur par mur)</option></select></label>`}
+        ${poly?'':`<label>Longueur (m)<input data-r="L" type="number" step="0.01" inputmode="decimal" value="${esc(r.L)}"></label>
+        <label>${mur?'Hauteur (m)':'Largeur (m)'}<input data-r="W" type="number" step="0.01" inputmode="decimal" value="${esc(r.W)}"></label>`}
         <label>${mur?'Ouvertures à déduire (m²)':'Surface à déduire (m²)'}<input data-r="deduct" type="number" step="0.01" inputmode="decimal" value="${esc(r.deduct)}"></label>
-        ${mur?'':`<label>Sens des fourrures<select data-r="dir"><option value="auto"${r.dir!=='L'&&r.dir!=='W'?' selected':''}>Automatique (le plus économique)</option><option value="L"${r.dir==='L'?' selected':''}>Dans la longueur (toul)</option><option value="W"${r.dir==='W'?' selected':''}>Dans la largeur (3ord)</option></select></label>`}
+        ${mur?'':`<label>Sens des fourrures<select data-r="dir"><option value="auto"${r.dir!=='L'&&r.dir!=='W'?' selected':''}>Automatique (le plus économique)</option><option value="L"${r.dir==='L'?' selected':''}>${poly?'Horizontal (→)':'Dans la longueur (toul)'}</option><option value="W"${r.dir==='W'?' selected':''}>${poly?'Vertical (↓)':'Dans la largeur (3ord)'}</option></select></label>`}
         <label>Nombre identique<input data-r="count" type="number" min="1" step="1" value="${esc(r.count||1)}"></label>
       </div>
+      ${poly?wallsEditor(r):''}
       <div class="res" data-res></div>
       ${mur?'':'<div data-cmp style="margin-top:10px"></div><div class="plan" data-plan></div>'}
     </div>`}).join('') || '<div class="empty">Ajoutez une pièce (plafond) ou un mur.</div>';
   $$('#rooms .room').forEach(el=>{
     const r=cur.rooms[+el.dataset.i];
-    el.querySelectorAll('[data-r]').forEach(inp=>inp.oninput=inp.onchange=()=>{r[inp.dataset.r]=inp.value;persist();updRoom(el,r);renderSummary()});
-    el.querySelector('[data-act=rm]').onclick=()=>{if(confirm('Supprimer « '+(r.name||'cet élément')+' » ?')){cur.rooms.splice(+el.dataset.i,1);persist();renderRooms();renderSummary()}};
-    el.querySelector('[data-act=dup]').onclick=()=>{cur.rooms.splice(+el.dataset.i+1,0,{...r,id:uid(),name:r.name+' (copie)'});persist();renderRooms();renderSummary()};
+    const refresh=()=>{persist();updRoom(el,r);renderSummary()};
+    const rebuild=()=>{persist();renderRooms();renderSummary()};
+    el.querySelectorAll('[data-r]').forEach(inp=>inp.oninput=inp.onchange=()=>{r[inp.dataset.r]=inp.value;refresh()});
+    el.querySelector('[data-act=rm]').onclick=()=>{if(confirm('Supprimer « '+(r.name||'cet élément')+' » ?')){cur.rooms.splice(+el.dataset.i,1);rebuild()}};
+    el.querySelector('[data-act=dup]').onclick=()=>{const c=structuredClone(r);c.id=uid();c.name=r.name+' (copie)';cur.rooms.splice(+el.dataset.i+1,0,c);rebuild()};
+    const sh=el.querySelector('[data-shape]');
+    if(sh)sh.onchange=()=>{
+      r.shape=sh.value;
+      if(r.shape==='poly'&&!(r.walls&&r.walls.length)){
+        const L=num(r.L)||4,W=num(r.W)||3;
+        r.walls=[{len:L,ang:0},{len:W,ang:90},{len:L,ang:180},{len:W,ang:270}];
+      }
+      rebuild();
+    };
+    // --- murs (forme libre) ---
+    const tpl=el.querySelector('[data-tpl]');
+    if(tpl)tpl.onchange=()=>{const t=TEMPLATES[tpl.value];if(!t)return;
+      if((r.walls||[]).length&&!confirm('Remplacer les murs actuels par le modèle « '+t.label+' » ?')){tpl.value='';return}
+      r.walls=t.walls.map(([len,ang])=>({len,ang}));rebuild()};
+    el.querySelectorAll('tr[data-w]').forEach(tr=>{
+      const w=r.walls[+tr.dataset.w];
+      tr.querySelector('[data-wf=len]').oninput=e=>{w.len=e.target.value;refresh()};
+      tr.querySelector('[data-wf=dir]').onchange=e=>{if(e.target.value==='x'){w.custom=true}else{w.ang=+e.target.value;w.custom=false}rebuild()};
+      const an=tr.querySelector('[data-wf=ang]');if(an)an.oninput=()=>{w.ang=an.value;w.custom=true;refresh()};
+      tr.querySelector('[data-wdel]').onclick=()=>{r.walls.splice(+tr.dataset.w,1);rebuild()};
+    });
+    const add=el.querySelector('[data-wadd]');
+    if(add)add.onclick=()=>{const ws=r.walls=r.walls||[];const last=ws[ws.length-1];ws.push({len:'',ang:last?(num(last.ang)+90)%360:0});rebuild();
+      const ins=el.parentNode.querySelectorAll(`.room[data-i="${el.dataset.i}"] [data-wf=len]`);ins[ins.length-1]?.focus()};
+    const cl=el.querySelector('[data-wclose]');
+    if(cl)cl.onclick=()=>{const pts=wallPoints(r.walls);const [x,y]=pts[pts.length-1];const d=Math.hypot(x,y);
+      if(d<0.005){toast('Le tracé est déjà fermé');return}
+      let a=Math.atan2(-y,-x)*180/Math.PI;a=Math.round(((a%360)+360)%360*10)/10;
+      r.walls.push({len:r2(d),ang:a,custom:!DIRS.some(v=>v[0]===a)});rebuild();toast('Mur de fermeture ajouté : '+fq(d)+' m')};
     updRoom(el,r);
   });
 }
 function updRoom(el,r){
-  const c=calcRoom(r), q=c.q, mur=r.type==='mur';
+  const c=calcRoom(r), q=c.q, mur=r.type==='mur', poly=!mur&&r.shape==='poly';
   const box=(v,l)=>`<div><b>${fq(v)}</b><span>${l}</span></div>`;
-  el.querySelector('[data-res]').innerHTML = !c.area&&!(num(r.L)&&num(r.W)) ? '<span class="hint">Saisissez les dimensions…</span>' :
+  el.querySelector('[data-res]').innerHTML = !c.area ? `<span class="hint">${poly?'Saisissez les murs de la pièce…':'Saisissez les dimensions…'}</span>` :
     box(c.area,'m² de surface')+box(c.perim,mur?'m de rail':'m de périmètre')+box(q.plaque,'plaques')+
     (mur? box(q.rail,'rails')+box(q.montant,'montants ('+c.lines+' lignes)')
-        : box(q.corniere,'cornières')+box(q.fourrure,'fourrures ('+c.lines*c.mult+' lignes)')+box(q.tige,'tiges ('+c.tigesPerLine+'/ligne)'))+
+        : box(q.corniere,'cornières')+box(q.fourrure,'barres de fourrure ('+c.lines*c.mult+' lignes)')+box(q.tige,'tiges'))+
     box(q.cheville,'chevilles');
+  const cz=el.querySelector('[data-close]');
+  if(cz){const g=c.geom;
+    cz.innerHTML=!g?'':g.gap>=0.005
+      ?`<span style="color:var(--danger)">⚠️ Le tracé ne revient pas au point de départ : il manque <b>${fq(g.gap)} m</b>. Vérifiez les mesures ou cliquez « Fermer automatiquement ». Le côté manquant est dessiné en rouge pointillé (il est compté dans le calcul).</span>`
+      :`<span style="color:var(--ok)">✅ Tracé fermé — ${g.edges.length} murs.</span>`}
   const pl=el.querySelector('[data-plan]');
   if(pl)pl.innerHTML=planSVG(r,c);
   const cmp=el.querySelector('[data-cmp]');
   if(cmp){
     if(!c.opts){cmp.innerHTML='';return}
-    const row=(k,t)=>{const o=c.opts[k];return `<tr class="${c.dir===k?'on':''}"><td>${t} — lignes de ${fq(o.along)} m${c.best===k?' <span class="tag ok">le plus économique</span>':''}</td>
-      <td class="n">${o.lines*c.mult}</td><td class="n">${o.bars*c.mult}</td><td class="n">${o.tiges*c.mult}</td></tr>`};
-    cmp.innerHTML=`<table class="cmp"><thead><tr><th>Sens des fourrures</th><th class="n">Lignes</th><th class="n">Barres</th><th class="n">Tiges</th></tr></thead>
-      <tbody>${row('L','Dans la longueur (toul)')}${row('W','Dans la largeur (3ord)')}</tbody></table>`;
+    const row=(k,t)=>{const o=c.opts[k];return `<tr class="${c.dir===k?'on':''}"><td>${t} — ligne la plus longue ${fq(o.maxLen)} m${c.best===k?' <span class="tag ok">le plus économique</span>':''}</td>
+      <td class="n">${o.lines*c.mult}</td><td class="n">${fq(o.total*c.mult)} m</td><td class="n">${o.bars*c.mult}</td><td class="n">${o.tiges*c.mult}</td></tr>`};
+    cmp.innerHTML=`<table class="cmp"><thead><tr><th>Sens des fourrures</th><th class="n">Lignes</th><th class="n">Métrage</th><th class="n">Barres</th><th class="n">Tiges</th></tr></thead>
+      <tbody>${row('L',poly?'Horizontal (→)':'Dans la longueur (toul)')}${row('W',poly?'Vertical (↓)':'Dans la largeur (3ord)')}</tbody></table>`;
   }
 }
 function planSVG(r,c){
-  const L=num(r.L),W=num(r.W);
-  if(!(L>0&&W>0))return '<span class="hint">Le plan s\'affichera ici.</span>';
-  const pad=24, maxW=600, maxH=220, k=Math.min((maxW-2*pad)/L,(maxH-2*pad)/W);
-  const w=L*k,h=W*k, sp=S.spacing, tsp=S.tigeSpacing;
-  let s=`<svg viewBox="0 0 ${w+2*pad} ${h+2*pad}" xmlns="http://www.w3.org/2000/svg">`;
-  s+=`<rect x="${pad}" y="${pad}" width="${w}" height="${h}" fill="#faf7f1" stroke="#b8893b" stroke-width="4"/>`;
-  const byL=c.dir!=='W';
-  for(let i=1;i<=c.lines;i++){
-    const d=i*sp*k;
-    if(byL){const y=pad+d; if(d>=h)break; s+=`<line x1="${pad}" y1="${y}" x2="${pad+w}" y2="${y}" stroke="#1f2a37" stroke-width="2"/>`;
-      for(let j=1;j<=c.tigesPerLine;j++){const x=pad+j*tsp*k; if(x>=pad+w)break; s+=`<circle cx="${x}" cy="${y}" r="3.2" fill="#b91c1c"/>`}}
-    else{const x=pad+d; if(d>=w)break; s+=`<line x1="${x}" y1="${pad}" x2="${x}" y2="${pad+h}" stroke="#1f2a37" stroke-width="2"/>`;
-      for(let j=1;j<=c.tigesPerLine;j++){const y=pad+j*tsp*k; if(y>=pad+h)break; s+=`<circle cx="${x}" cy="${y}" r="3.2" fill="#b91c1c"/>`}}
+  const g=c.geom;
+  if(!g)return '<span class="hint">Le plan s\'affichera ici.</span>';
+  const lay=c.opts[c.dir], sp=S.spacing, tsp=S.tigeSpacing;
+  const pad=46, k=Math.min(560/Math.max(g.w,0.1),300/Math.max(g.h,0.1));
+  const W=g.w*k+2*pad, H=g.h*k+2*pad, X=x=>pad+x*k, Y=y=>pad+y*k;
+  const n=g.pts.length, open=g.gap>=0.005;
+  let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif">`;
+  s+=`<polygon points="${g.pts.map(p=>X(p[0])+','+Y(p[1])).join(' ')}" fill="#faf7f1" stroke="none"/>`;
+  // fourrures + tiges
+  lay.segs.forEach(sg=>{
+    const A=lay.horiz?[sg.x1,sg.y]:[sg.y,sg.x1], B=lay.horiz?[sg.x2,sg.y]:[sg.y,sg.x2];
+    s+=`<line x1="${X(A[0])}" y1="${Y(A[1])}" x2="${X(B[0])}" y2="${Y(B[1])}" stroke="#1f2a37" stroke-width="2"/>`;
+    sg.t.forEach(t=>{const P=lay.horiz?[t,sg.y]:[sg.y,t];s+=`<circle cx="${X(P[0])}" cy="${Y(P[1])}" r="3.2" fill="#b91c1c"/>`});
+  });
+  // murs (cornières) + cotes
+  for(let i=0;i<n;i++){
+    const p=g.pts[i],q=g.pts[(i+1)%n],closing=open&&i===n-1;
+    s+=`<line x1="${X(p[0])}" y1="${Y(p[1])}" x2="${X(q[0])}" y2="${Y(q[1])}" stroke="${closing?'#b91c1c':'#b8893b'}" stroke-width="4" ${closing?'stroke-dasharray="8 6"':''} stroke-linecap="round"/>`;
+    const dx=q[0]-p[0],dy=q[1]-p[1],l=Math.hypot(dx,dy)||1;
+    const nx=(g.sign>0?dy:-dy)/l, ny=(g.sign>0?-dx:dx)/l;          // normale vers l'extérieur
+    const mx=X((p[0]+q[0])/2)+nx*17, my=Y((p[1]+q[1])/2)+ny*17;
+    const label=(r.shape==='poly'?(closing?'? ':(i+1)+' · '):'')+fq(g.edges[i])+' m';
+    s+=`<text x="${mx}" y="${my+4}" text-anchor="middle" font-size="12" font-weight="600" fill="${closing?'#b91c1c':'#374151'}" paint-order="stroke" stroke="#fff" stroke-width="3">${label}</text>`;
   }
-  s+=`<text x="${pad+w/2}" y="${pad-7}" text-anchor="middle" font-size="12" fill="#6b7280">${fq(L)} m</text>`;
-  s+=`<text x="${pad-7}" y="${pad+h/2}" text-anchor="middle" font-size="12" fill="#6b7280" transform="rotate(-90 ${pad-7} ${pad+h/2})">${fq(W)} m</text></svg>`;
-  return s+`<div class="legend"><span><i style="background:#b8893b"></i>Cornières (périmètre)</span><span><i style="background:#1f2a37"></i>Fourrures tous les ${fq(sp*100)} cm</span><span><i style="background:#b91c1c;height:8px;width:8px;border-radius:50%"></i>Tiges tous les ${fq(tsp*100)} cm</span></div>`;
+  g.pts.forEach(p=>s+=`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="3" fill="#94692a"/>`);
+  if(r.shape==='poly'){const p=g.pts[0];s+=`<text x="${X(p[0])-6}" y="${Y(p[1])-6}" text-anchor="end" font-size="11" fill="#94692a">départ</text>`}
+  s+='</svg>';
+  return s+`<div class="legend"><span><i style="background:#b8893b"></i>Cornières (murs)</span><span><i style="background:#1f2a37"></i>Fourrures tous les ${fq(sp*100)} cm</span><span><i style="background:#b91c1c;height:8px;width:8px;border-radius:50%"></i>Tiges tous les ${fq(tsp*100)} cm</span><span>Encombrement : ${fq(g.w)} × ${fq(g.h)} m</span></div>`;
 }
 $('#add-plafond').onclick=()=>{cur.rooms.push(newRoom('plafond'));persist();renderRooms();renderSummary()};
 $('#add-mur').onclick=()=>{cur.rooms.push(newRoom('mur'));persist();renderRooms();renderSummary()};
@@ -574,7 +695,7 @@ function renderDevis(){
     <h3>Pièces / surfaces</h3>
     <table><thead><tr><th>Désignation</th><th>Type</th><th class="n">Dimensions</th><th class="n">Surface</th></tr></thead><tbody>
     ${t.rooms.filter(x=>x.c.area).map(({r,c})=>`<tr><td>${esc(r.name)}${c.mult>1?' × '+c.mult:''}</td><td>${r.type==='mur'?'Mur / cloison':'Faux plafond'}</td>
-      <td class="n">${fq(num(r.L))} × ${fq(num(r.W))} m${num(r.deduct)?' − '+fq(num(r.deduct))+' m²':''}</td><td class="n">${fq(c.area)} m²</td></tr>`).join('')}
+      <td class="n">${r.shape==='poly'&&r.type!=='mur'?'Forme libre, '+c.geom.edges.length+' murs':fq(num(r.L))+' × '+fq(num(r.W))+' m'}${num(r.deduct)?' − '+fq(num(r.deduct))+' m²':''}</td><td class="n">${fq(c.area)} m²</td></tr>`).join('')}
     </tbody><tfoot><tr><td colspan="3">Surface totale</td><td class="n">${fq(t.area)} m²</td></tr></tfoot></table>
     <h3>Détail</h3>
     <table><thead><tr><th>Désignation</th><th class="n">Quantité</th><th class="n">P.U.</th><th class="n">Montant</th></tr></thead><tbody>
