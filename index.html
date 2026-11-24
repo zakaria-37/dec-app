@@ -70,6 +70,8 @@ tfoot td{font-weight:700}
 .alert{background:#fef3c7;border:1px solid #fcd34d;color:#78350f;padding:10px 12px;border-radius:8px;margin-bottom:12px;font-size:14px}
 .hint{font-size:12px;color:var(--muted);margin-top:6px}
 .hide{display:none!important}
+.cmp{background:#fff;border:1px solid var(--line);border-radius:8px;font-size:13px}
+.cmp tr.on td{background:#fdf6e9;font-weight:700}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;z-index:99;opacity:0;transition:.25s;pointer-events:none}
 .toast.on{opacity:1}
 
@@ -232,7 +234,7 @@ tfoot td{font-weight:700}
       <label>Enduit (kg par m²)<input data-s="enduitM2" type="number" step="0.05"></label>
       <label>Poids d'un sac d'enduit (kg)<input data-s="enduitSac" type="number"></label>
     </div>
-    <p class="hint">Plafond : cornières = périmètre ÷ longueur barre · fourrures tous les « entraxe » · une tige tous les « entraxe tiges » sur chaque fourrure · 1 cheville par tige.<br>Mur : rails haut + bas, montants tous les « entraxe ».</p>
+    <p class="hint">Plafond : cornières = périmètre ÷ longueur barre · fourrures tous les « entraxe » (bords sur cornières) · une tige tous les « entraxe tiges » sur chaque fourrure · barres comptées avec la vraie découpe · 1 cheville par tige. Le sens « Automatique » choisit le sens qui coûte le moins.<br>Mur : rails haut + bas, montants tous les « entraxe ».</p>
   </div>
 
   <div class="card">
@@ -305,6 +307,30 @@ const C=x=>Math.ceil(x-1e-9);
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),1800)}
 
 /* ===================== Calculs ===================== */
+// Fourrures posées dans le sens "along" (longueur de chaque ligne), réparties sur "across".
+// - lignes : une tous les 60 cm ; les deux bords reposent sur les cornières (non comptés)
+// - tiges : une tous les 60 cm sur chaque ligne ; les bouts reposent sur les cornières
+// - barres : vraie découpe des barres de 3 m (une ligne plus longue qu'une barre = barre + morceau,
+//   les morceaux sont pris dans les chutes quand c'est possible)
+function fourrureLayout(along,across){
+  const sp=S.spacing,tsp=S.tigeSpacing,bar=S.barLen;
+  const lines=Math.max(1,C(across/sp)-1);
+  const tpl=Math.max(1,C(along/tsp)-1);
+  let full=0; const rest=[];
+  for(let i=0;i<lines;i++){
+    const f=Math.floor(along/bar+1e-9); full+=f;
+    const rem=r2(along-f*bar); if(rem>0.01)rest.push(rem);
+  }
+  rest.sort((a,b)=>b-a);                     // rangement des morceaux dans les barres (plus grand d'abord)
+  const bins=[];
+  rest.forEach(p=>{const b=bins.find(x=>x+p<=bar+1e-9); if(b!==undefined)bins[bins.indexOf(b)]+=p; else bins.push(p)});
+  return {along,across,lines,tpl,tiges:lines*tpl,bars:full+bins.length,pieces:rest.length};
+}
+function layoutCost(l){
+  const pf=num(S.prices.fourrure),pt=num(S.prices.tige),pc=num(S.prices.cheville);
+  if(pf||pt) return l.bars*pf+l.tiges*(pt+pc);
+  return l.bars*1000+l.tiges;                // sans prix : le moins de barres, puis le moins de tiges
+}
 function calcRoom(r){
   const L=num(r.L), W=num(r.W), ded=num(r.deduct), mult=Math.max(1,Math.round(num(r.count)||1));
   const pa=S.plaqueL*S.plaqueW, bar=S.barLen, sp=S.spacing, tsp=S.tigeSpacing;
@@ -322,13 +348,15 @@ function calcRoom(r){
   }else{
     o.perim=2*(L+W);
     q.corniere=C(o.perim/bar);
-    const along = r.dir==='W'?W:L;   // sens des fourrures
-    const across= r.dir==='W'?L:W;
-    o.along=along; o.across=across;
-    o.lines=Math.max(1,C(across/sp)-1);          // les bords reposent sur les cornières
-    q.fourrure=C(o.lines*along/bar);
-    o.tigesPerLine=Math.max(1,C(along/tsp)-1);   // une tige tous les 60 cm de fourrure
-    q.tige=o.lines*o.tigesPerLine;
+    // On calcule les deux sens possibles, puis on garde celui choisi (ou le plus économique)
+    const optL=fourrureLayout(L,W), optW=fourrureLayout(W,L);
+    o.opts={L:optL,W:optW};
+    o.best=layoutCost(optW)<layoutCost(optL)?'W':'L';
+    o.dir=(r.dir==='L'||r.dir==='W')?r.dir:o.best;
+    const lay=o.opts[o.dir];
+    Object.assign(o,{along:lay.along,across:lay.across,lines:lay.lines,tigesPerLine:lay.tpl,pieces:lay.pieces});
+    q.fourrure=lay.bars;
+    q.tige=lay.tiges;
     q.cheville=q.tige+C(o.perim/sp);             // tiges + fixation cornières
   }
   if(mult>1){o.area*=mult;o.perim*=mult;for(const k in q)q[k]*=mult}
@@ -397,7 +425,7 @@ function nextNo(){
   const n=P.filter(p=>(p.no||'').startsWith('DV-'+y)).map(p=>parseInt(p.no.split('-')[2])||0);
   return `DV-${y}-${String((n.length?Math.max(...n):0)+1).padStart(3,'0')}`;
 }
-function newRoom(type){return {id:uid(),type,name:type==='mur'?'Mur':'Chambre',L:'',W:'',deduct:'',dir:'L',count:1}}
+function newRoom(type){return {id:uid(),type,name:type==='mur'?'Mur':'Chambre',L:'',W:'',deduct:'',dir:'auto',count:1}}
 $('#new-project').onclick=()=>{
   cur={id:uid(),no:nextNo(),title:'',client:'',phone:'',address:'',date:new Date().toISOString().slice(0,10),
        status:'Brouillon',rooms:[newRoom('plafond')],extras:[],discount:0,tva:0,showMat:'1',notes:S.defaultNotes,updated:Date.now()};
@@ -426,11 +454,11 @@ function renderRooms(){
         <label>Longueur (m)<input data-r="L" type="number" step="0.01" inputmode="decimal" value="${esc(r.L)}"></label>
         <label>${mur?'Hauteur (m)':'Largeur (m)'}<input data-r="W" type="number" step="0.01" inputmode="decimal" value="${esc(r.W)}"></label>
         <label>${mur?'Ouvertures à déduire (m²)':'Surface à déduire (m²)'}<input data-r="deduct" type="number" step="0.01" inputmode="decimal" value="${esc(r.deduct)}"></label>
-        ${mur?'':`<label>Sens des fourrures<select data-r="dir"><option value="L"${r.dir!=='W'?' selected':''}>Dans la longueur (toul)</option><option value="W"${r.dir==='W'?' selected':''}>Dans la largeur (3ord)</option></select></label>`}
+        ${mur?'':`<label>Sens des fourrures<select data-r="dir"><option value="auto"${r.dir!=='L'&&r.dir!=='W'?' selected':''}>Automatique (le plus économique)</option><option value="L"${r.dir==='L'?' selected':''}>Dans la longueur (toul)</option><option value="W"${r.dir==='W'?' selected':''}>Dans la largeur (3ord)</option></select></label>`}
         <label>Nombre identique<input data-r="count" type="number" min="1" step="1" value="${esc(r.count||1)}"></label>
       </div>
       <div class="res" data-res></div>
-      ${mur?'':'<div class="plan" data-plan></div>'}
+      ${mur?'':'<div data-cmp style="margin-top:10px"></div><div class="plan" data-plan></div>'}
     </div>`}).join('') || '<div class="empty">Ajoutez une pièce (plafond) ou un mur.</div>';
   $$('#rooms .room').forEach(el=>{
     const r=cur.rooms[+el.dataset.i];
@@ -450,6 +478,14 @@ function updRoom(el,r){
     box(q.cheville,'chevilles');
   const pl=el.querySelector('[data-plan]');
   if(pl)pl.innerHTML=planSVG(r,c);
+  const cmp=el.querySelector('[data-cmp]');
+  if(cmp){
+    if(!c.opts){cmp.innerHTML='';return}
+    const row=(k,t)=>{const o=c.opts[k];return `<tr class="${c.dir===k?'on':''}"><td>${t} — lignes de ${fq(o.along)} m${c.best===k?' <span class="tag ok">le plus économique</span>':''}</td>
+      <td class="n">${o.lines*c.mult}</td><td class="n">${o.bars*c.mult}</td><td class="n">${o.tiges*c.mult}</td></tr>`};
+    cmp.innerHTML=`<table class="cmp"><thead><tr><th>Sens des fourrures</th><th class="n">Lignes</th><th class="n">Barres</th><th class="n">Tiges</th></tr></thead>
+      <tbody>${row('L','Dans la longueur (toul)')}${row('W','Dans la largeur (3ord)')}</tbody></table>`;
+  }
 }
 function planSVG(r,c){
   const L=num(r.L),W=num(r.W);
@@ -458,7 +494,7 @@ function planSVG(r,c){
   const w=L*k,h=W*k, sp=S.spacing, tsp=S.tigeSpacing;
   let s=`<svg viewBox="0 0 ${w+2*pad} ${h+2*pad}" xmlns="http://www.w3.org/2000/svg">`;
   s+=`<rect x="${pad}" y="${pad}" width="${w}" height="${h}" fill="#faf7f1" stroke="#b8893b" stroke-width="4"/>`;
-  const byL=r.dir!=='W';
+  const byL=c.dir!=='W';
   for(let i=1;i<=c.lines;i++){
     const d=i*sp*k;
     if(byL){const y=pad+d; if(d>=h)break; s+=`<line x1="${pad}" y1="${y}" x2="${pad+w}" y2="${y}" stroke="#1f2a37" stroke-width="2"/>`;
