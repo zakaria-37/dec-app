@@ -1,0 +1,14 @@
+{
+  "name": "Abdou Deco — Devis",
+  "short_name": "Abdou Deco",
+  "description": "Calcul des matériaux et devis plaque de plâtre / faux plafonds",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f3ef",
+  "theme_color": "#1f2a37",
+  "lang": "fr",
+  "icons": [
+    {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+  ]
+}
